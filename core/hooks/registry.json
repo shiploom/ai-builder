@@ -1,0 +1,67 @@
+[
+  {
+    "event": "before_infra",
+    "matcher": "infra/*",
+    "action": "require-approval",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "before_migration",
+    "matcher": "migrations/*",
+    "action": "require-approval",
+    "run": {"kind": "policy", "ref": "policies/default.json"},
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "before_deploy",
+    "matcher": "*",
+    "action": "require-approval",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "after_deploy",
+    "matcher": "*",
+    "action": "notify",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "before_merge",
+    "matcher": "main",
+    "action": "require-approval",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "before_tool",
+    "matcher": "mcp__*",
+    "action": "run-validator",
+    "run": {"kind": "policy", "ref": "policies/default.json"},
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "before_file_write",
+    "matcher": ".shiploom/.oracle/*",
+    "action": "deny",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "on_verify_fail",
+    "matcher": "*",
+    "action": "notify",
+    "scope": "global",
+    "version": "1.0.0"
+  },
+  {
+    "event": "on_security_fail",
+    "matcher": "*",
+    "action": "notify",
+    "scope": "global",
+    "version": "1.0.0"
+  }
+]

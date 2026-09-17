@@ -1,0 +1,9 @@
+{
+  "name": "acme-notes-js",
+  "version": "1.0.0",
+  "description": "AC demo fixture (no dependencies)",
+  "scripts": {
+    "test": "node --test test/app.test.js"
+  },
+  "license": "MIT"
+}

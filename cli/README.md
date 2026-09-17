@@ -1,0 +1,30 @@
+# cli/ — `shiploom` command (Python+uv MVP)
+
+Stdlib `argparse` only in MVP. Entry: `shiploom` → `cli.shiploom:main`.
+
+Implemented (PR4): `install init validate status doctor audit`.
+Added (PR6): `lock [--check] [--actor] [--json]` (hash-lock acceptance + oracles).
+Added (PR7): `run <workflow> [--from STEP] [--only STEP] [--resume]
+[--budget KEY=VALUE] [--json]` (idempotent stepper) + `approve <gate-id>
+[--deny --reason]` (records human gates; policy enforced by `run` gates).
+Added (PR8): `verify [--report] [--gates a,b] [--json]` (deterministic
+gates + quality table; `--report` writes `verification/gate-report.json`).
+Post-MVP (PR10 closed): `add upgrade trace budget resume approvals`
++ team/enterprise packs + `settings.json`/`opencode.json` mapping + Fumadocs site.
+Added (PR9): `adapters --list | --generate <harness|all>` (base/claude/
+opencode; idempotent, `DO NOT EDIT` headers).
+
+- `manifest.py` — orchestrator-owned manifest (atomic saves, kill-safe).
+- `auditlog.py` — append-only hash-chained audit log + verify/export.
+- `doctor.py` — offline compat checks (exit 0 ok, 5 on failure).
+- `oracle.py` — acceptance discovery, vault checks, lock/check-lock.
+- `run.py` — deterministic stepper: order, consumes/produces, gates,
+  retries/replan, resume, wall-clock budgets, checkpoints.
+- `gates.py` — gate runner: configured build/typecheck/lint/test/contract,
+  auto-detected pytest, built-in secrets scan + dep inventory (report-only)
+  + compileall, 2× determinism check, verify-step checker.
+- `adapters.py` — single-source core → harness files (`DO NOT EDIT` headers).
+- `policy.py` — JSON-policy packs + hook matching (deny > require-approval
+  > allow; conditional rules win ties). Policy gates deny with exit 3.
+- `mcp.py` — capability → provider-chain resolution + quarantine flags.
+- `shiploom.py` — parser + subcommands. Exit codes: 0/2/3/4/5 per AGENTS.md.

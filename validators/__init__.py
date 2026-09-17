@@ -1,0 +1,1 @@
+"""Shiploom Core package marker."""

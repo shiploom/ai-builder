@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/conformance/base-capabilities",
+  "title": "Shiploom conformance profile: portable base (AGENTS.md)",
+  "description": "Guaranteed subset (MASTER_SPEC 21): facts + base-spec SKILL.md + cap.* MCP + Markdown artifacts + stdlib validators. Harness-specific profile; shared fixtures live in examples/greenfield-starter.",
+  "harness": "base",
+  "version": "1.0.0",
+  "skillFieldsHonored": ["name", "description", "license", "compatibility", "metadata"],
+  "skillFieldsIgnored": ["x-shiploom-harness"],
+  "hookEvents": [],
+  "mcpTransports": [],
+  "permissionsModel": "none (facts file only)",
+  "contextLimits": "harness-defined",
+  "mustProduce": ["AGENTS.md"],
+  "mustValidate": ["AGENTS.md is plain Markdown (no frontmatter required)"]
+}

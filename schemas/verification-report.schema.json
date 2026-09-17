@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/verification-report",
+  "title": "Shiploom verification report",
+  "description": "Validates verification report data: verification/verification-report frontmatter + `shiploom verify --report` JSON (MASTER_SPEC 17). Verifier runs in fresh context with hidden oracle; output is schema-validated.",
+  "type": "object",
+  "required": ["id", "attemptRef", "verifier", "results", "gatesSummary", "verdict", "timestamp"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[A-Z]{2,6}-[0-9]{3,}$" },
+    "attemptRef": { "type": "string", "minLength": 1 },
+    "verifier": { "type": "string", "minLength": 1 },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["acceptanceId", "result", "oracleUsed"],
+        "properties": {
+          "acceptanceId": { "type": "string", "minLength": 1 },
+          "result": { "type": "string", "enum": ["pass", "fail"] },
+          "evidence": { "type": "string" },
+          "oracleUsed": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gatesSummary": {
+      "type": "object",
+      "properties": {
+        "build": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "lint": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "typecheck": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "test": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "contract": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "secrets": { "type": "string", "enum": ["pass", "fail", "skip"] },
+        "depAudit": { "type": "string", "enum": ["pass", "fail", "skip"] }
+      },
+      "additionalProperties": true
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "compile": { "type": "boolean" },
+        "deterministic2x": { "type": "boolean" },
+        "noNetwork": { "type": "boolean" },
+        "mutationSampled": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "verdict": { "type": "string", "enum": ["pass", "fail"] },
+    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+    "links": {
+      "type": "object",
+      "properties": {
+        "tested_by": { "type": "array", "items": { "type": "string" } },
+        "verified_by": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

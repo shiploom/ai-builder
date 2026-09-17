@@ -1,0 +1,43 @@
+{
+  "policyId": "default",
+  "version": "1.0.0",
+  "description": "Shiploom default-deny pack (MASTER_SPEC 22): destructive and irreversible actions are denied or require recorded human approval. Evaluated by cli/policy.py; orchestrator policy gates enforce it (deny -> exit 3).",
+  "defaultEffect": "deny",
+  "rules": [
+    {
+      "id": "deny-destructive",
+      "effect": "deny",
+      "actions": ["infra.destroy", "db.destroy", "db.migrate-prod", "secret.exfiltrate"],
+      "resources": ["*"],
+      "message": "destructive action denied by default policy (no override path in MVP)"
+    },
+    {
+      "id": "approve-deploy",
+      "effect": "require-approval",
+      "actions": ["deploy.*", "release.*"],
+      "resources": ["*"],
+      "message": "deployments require a recorded human approval"
+    },
+    {
+      "id": "approve-merge-protected",
+      "effect": "require-approval",
+      "actions": ["merge.protected", "push.main"],
+      "resources": ["*"],
+      "message": "protected-branch merges require a recorded human approval"
+    },
+    {
+      "id": "approve-spend",
+      "effect": "require-approval",
+      "actions": ["spend.commit", "infra.provision"],
+      "resources": ["*"],
+      "message": "spend and provisioning require a recorded human approval"
+    },
+    {
+      "id": "allow-readonly-recon",
+      "effect": "allow",
+      "actions": ["repo.read", "test.run", "artifact.read", "workflow.step"],
+      "resources": ["*"],
+      "message": "read-only and local verification actions are permitted"
+    }
+  ]
+}

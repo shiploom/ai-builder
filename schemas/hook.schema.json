@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/hook",
+  "title": "Shiploom hook entry",
+  "description": "Validates one entry in hooks/registry.json (MASTER_SPEC 11.5). Core ships deny/require-approval/run-validator/notify; run-script is an audited escape hatch. Conditional rule (run required for run-validator/run-script) is enforced by validate.py, not by this schema.",
+  "type": "object",
+  "required": ["event", "matcher", "action", "scope", "version"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": ["before_tool", "after_tool", "before_file_write", "after_file_write", "before_commit", "before_merge", "before_infra", "before_migration", "before_deploy", "after_deploy", "on_verify_fail", "on_security_fail", "before_agent", "after_agent"]
+    },
+    "matcher": { "type": "string", "minLength": 1 },
+    "action": { "type": "string", "enum": ["deny", "require-approval", "run-validator", "run-script", "notify"] },
+    "run": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["policy", "script", "prompt"] },
+        "ref": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "scope": { "type": "string", "enum": ["global", "project"] },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$" }
+  },
+  "additionalProperties": false
+}

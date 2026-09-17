@@ -1,0 +1,40 @@
+{
+  "id": "VR-101",
+  "attemptRef": "diff: slices/auth@a1b2c3d",
+  "verifier": "agent:verifier:fresh-ctx-7",
+  "results": [
+    {
+      "acceptanceId": "ACC-101",
+      "result": "pass",
+      "evidence": "oracle log hash sha256:9f2c…; gate test exit 0",
+      "oracleUsed": true
+    },
+    {
+      "acceptanceId": "ACC-102",
+      "result": "pass",
+      "evidence": "oracle log hash sha256:41ad…; gate test exit 0",
+      "oracleUsed": true
+    }
+  ],
+  "gatesSummary": {
+    "build": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "secrets": "pass",
+    "depAudit": "pass"
+  },
+  "quality": {
+    "compile": true,
+    "deterministic2x": true,
+    "noNetwork": true,
+    "mutationSampled": false,
+    "notes": "mutation sampling report-only in MVP"
+  },
+  "verdict": "pass",
+  "timestamp": "2026-09-17T10:00:00Z",
+  "links": {
+    "tested_by": ["ACC-101", "ACC-102"],
+    "verified_by": ["VR-101"]
+  }
+}

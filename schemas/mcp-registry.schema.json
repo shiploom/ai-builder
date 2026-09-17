@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/mcp-registry",
+  "title": "Shiploom MCP registry (cap.* abstraction)",
+  "description": "Validates .shiploom/mcp-registry.json (MASTER_SPEC 11.12, 20). Core references cap.* only; server names live here. Swap provider = edit registry, not skills.",
+  "type": "object",
+  "required": ["capabilities"],
+  "properties": {
+    "capabilities": {
+      "type": "object",
+      "patternProperties": {
+        "^cap\\.[a-z0-9._-]+$": {
+          "type": "object",
+          "required": ["providers", "ttlS"],
+          "properties": {
+            "providers": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "trust": { "type": "string", "enum": ["first-party", "attested", "community", "quarantined", "untrusted"] },
+            "ttlS": { "type": "integer", "minimum": 0 },
+            "fallback": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "servers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["transport", "version", "attested", "scopes", "auth"],
+        "properties": {
+          "transport": { "type": "string", "enum": ["stdio", "sse", "streamable-http", "http"] },
+          "version": { "type": "string", "minLength": 1 },
+          "attested": { "type": "boolean" },
+          "scopes": { "type": "array", "items": { "type": "string" } },
+          "auth": {
+            "type": "string",
+            "description": "Env/keychain ref only, never a secret. e.g. env:TAVILY_KEY",
+            "pattern": "^(env:[A-Z0-9_]+|(keychain|secret):.+)$"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

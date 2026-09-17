@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/conformance/opencode-capabilities",
+  "title": "Shiploom conformance profile: OpenCode",
+  "description": "Base-spec subset: unknown frontmatter fields ignored, facts via AGENTS.md. opencode.json generation deferred until pinned against vendor docs; per-skill permissions post-MVP (PR10 closed).",
+  "harness": "opencode",
+  "version": "1.0.0",
+  "skillFieldsHonored": ["name", "description", "license", "compatibility", "metadata"],
+  "skillFieldsIgnored": ["x-shiploom-harness"],
+  "hookEvents": [],
+  "hookEventsMappedMVP": [],
+  "mcpTransports": ["stdio", "sse", "streamable-http"],
+  "permissionsModel": "per-skill permissions (post-MVP); deny-means-deny enforced by orchestrator now",
+  "contextLimits": "harness-defined",
+  "mustProduce": [".opencode/skills/<name>/SKILL.md"],
+  "mustValidate": ["generated SKILL.md files pass validate --strict", "frontmatter byte-identical to core source"]
+}

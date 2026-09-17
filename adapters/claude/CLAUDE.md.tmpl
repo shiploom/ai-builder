@@ -1,0 +1,30 @@
+# CLAUDE.md — {{projectName}}
+
+> DO NOT EDIT — generated from Shiploom core {{coreVersion}}; edit core source, then re-run `shiploom adapters --generate`.
+
+## Facts
+
+- Method: Shiploom Core {{coreVersion}} (`Specifier → Implementer → Verifier` + deterministic orchestrator + human).
+- Done is computed, never claimed: locked acceptance + hidden oracle + independent verifier + deterministic gates.
+- Default workflow: `{{workflow}}`. Skills live in `.claude/skills/` (base-spec, identical to core).
+- Oracle vault `./.shiploom/.oracle/` is `0700`, gitignored, never mounted into builder context.
+
+## Conventions
+
+- Artifact frontmatter (`id/kind/title/status/provenance/links/owner/version`) on every artifact file.
+- Traceability `Requirement → Decision → Implementation → Test → Verification Result` via `links{}`.
+- Evidence grading in research: Fact / Inferred / Opinion / Marketing / Conflicting / Uncertain + source + date.
+- Secrets via env/keychain refs only (`env:NAME`); never in configs/artifacts/logs.
+- Deny-means-deny: permission denials stop the work (never spawn a child to bypass).
+
+## Commands
+
+- `shiploom validate [--strict] [path]` / `shiploom status [--json]` / `shiploom lock [--check]`
+- `shiploom run <workflow> [--from/--only/--resume]` / `shiploom approve <gate-id>`
+- `shiploom verify [--report]` / `shiploom doctor`
+
+## Hooks (post-MVP)
+
+Claude hook mapping (28 events) and `settings.json` permissions ship with
+the hooks/policy packs. Until then, enforcement is via the orchestrator
+pre-checks (`validate`, `lock --check`, manifest gates).

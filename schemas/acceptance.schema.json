@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/acceptance",
+  "title": "Shiploom locked acceptance criterion",
+  "description": "Validates one acceptance object in acceptance/*.json (MASTER_SPEC 11.2). Files may contain a single object or an array of these objects; validate.py accepts both. Vagueness (unmeasurable statements) is enforced by `validate --strict`, not by this schema.",
+  "type": "object",
+  "required": ["id", "statement", "howToVerify", "oracleRef"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,6}-[0-9]{3,}$",
+      "description": "Convention ACC-001, ACC-002, ..."
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000,
+      "description": "Measurable requirement statement. Must pair with howToVerify."
+    },
+    "howToVerify": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["human", "script", "http", "browser"] },
+        "command": { "type": "string", "minLength": 1 },
+        "expect": { "type": "string", "minLength": 1 },
+        "timeoutS": { "type": "integer", "minimum": 1, "maximum": 600 }
+      },
+      "additionalProperties": false
+    },
+    "oracleRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path under .shiploom/.oracle/, e.g. oracle/ACC-001.sh. Never an absolute path; never fed to builder context."
+    },
+    "version": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

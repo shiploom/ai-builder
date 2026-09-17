@@ -1,0 +1,31 @@
+{
+  "capabilities": {
+    "cap.web.search": {
+      "providers": ["tavily"],
+      "trust": "community",
+      "ttlS": 3600,
+      "fallback": "fetch"
+    },
+    "cap.web.fetch": {
+      "providers": ["fetch"],
+      "trust": "first-party",
+      "ttlS": 3600
+    }
+  },
+  "servers": {
+    "tavily": {
+      "transport": "http",
+      "version": "1.2.0",
+      "attested": false,
+      "scopes": ["search:read"],
+      "auth": "env:TAVILY_KEY"
+    },
+    "fetch": {
+      "transport": "stdio",
+      "version": "1.0.0",
+      "attested": true,
+      "scopes": ["fetch:read"],
+      "auth": "env:ALLOWLIST_ONLY"
+    }
+  }
+}

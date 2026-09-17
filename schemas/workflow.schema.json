@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/workflow",
+  "title": "Shiploom workflow frontmatter (declarative)",
+  "description": "Validates workflows/*.md YAML frontmatter (MASTER_SPEC 11.4). MVP is sequential + conditional branches + event routes + approval gates. No general DAG/cycles; cycles only via bounded retries + replan event.",
+  "type": "object",
+  "required": ["name", "version", "steps"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$" },
+    "kind": { "type": "string", "enum": ["sequential"] },
+    "resume": { "type": "boolean" },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "tokens": { "type": "integer", "minimum": 1 },
+        "spendUSD": { "type": "number", "minimum": 0 },
+        "wallClockH": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "uses": { "type": "string", "minLength": 1 },
+          "consumes": { "type": "array", "items": { "type": "string" } },
+          "produces": { "type": "array", "items": { "type": "string" } },
+          "gate": { "type": "string", "enum": ["none", "human-approval", "policy", "verification"] },
+          "policy": { "type": "string" },
+          "action": { "type": "string", "description": "Guarded action for policy gates (e.g. deploy.prod)" },
+          "resource": { "type": "string", "description": "Guarded resource for policy gates (e.g. prod)" },
+          "onDeny": { "type": "string", "enum": ["pause", "replan", "abort"] },
+          "retries": { "type": "integer", "minimum": 0, "maximum": 4 },
+          "onFail": { "type": "string", "enum": ["replan", "abort", "retry"] },
+          "on": { "type": "string" },
+          "when": { "type": "string" },
+          "event": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

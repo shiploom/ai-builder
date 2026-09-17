@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/artifact-frontmatter",
+  "title": "Shiploom artifact frontmatter",
+  "description": "Validates YAML frontmatter of every artifact Markdown file (MASTER_SPEC 11.1). File body is Markdown; this schema covers the frontmatter mapping only.",
+  "type": "object",
+  "required": ["id", "kind", "title", "status", "provenance", "links", "owner", "version"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,6}-[0-9]{3,}$",
+      "description": "Stable artifact id, e.g. REQ-001, ADR-007, VR-009."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["requirement", "decision", "plan", "report", "acceptance", "diagram-ref"]
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "researched", "verified", "approved", "rejected", "superseded"]
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type", "ref", "confidence", "date"],
+        "properties": {
+          "type": { "type": "string", "enum": ["human", "agent", "tool", "web", "inference"] },
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Source ref: URL, file:line, or mcp:server/tool#id."
+          },
+          "confidence": { "type": "string", "enum": ["verified", "high", "medium", "low"] },
+          "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "owner", "expires"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string", "minLength": 1 },
+          "expires": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "requires": { "type": "array", "items": { "type": "string" } },
+        "decided_by": { "type": "array", "items": { "type": "string" } },
+        "implemented_by": { "type": "array", "items": { "type": "string" } },
+        "tested_by": { "type": "array", "items": { "type": "string" } },
+        "verified_by": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "owner": { "type": "string", "enum": ["specifier", "implementer", "verifier", "human"] },
+    "version": { "type": "integer", "minimum": 1 },
+    "supersedes": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": true
+}

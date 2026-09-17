@@ -1,0 +1,1 @@
+{"adapter": "base", "description": "Portable AGENTS.md facts (every harness)", "outputs": [{"template": "AGENTS.md.tmpl", "target": "AGENTS.md"}], "skills": false, "version": "1.0.0"}

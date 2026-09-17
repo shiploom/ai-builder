@@ -1,0 +1,1 @@
+{"adapter": "claude", "description": "CLAUDE.md + .claude/skills/ (base-spec copies)", "outputs": [{"template": "CLAUDE.md.tmpl", "target": "CLAUDE.md"}], "skills": true, "skillsTarget": ".claude/skills", "version": "1.0.0"}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shiploom.dev/schemas/policy",
+  "title": "Shiploom JSON-policy pack (default-deny)",
+  "description": "Stdlib-evaluated JSON rules for MVP (MASTER_SPEC 33-D3). Sufficient for default-deny gates; zero-runtime preserved. Adopt Cedar/Rego only if enterprise pilot hits expressiveness ceiling.",
+  "type": "object",
+  "required": ["policyId", "version", "rules"],
+  "properties": {
+    "policyId": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$" },
+    "description": { "type": "string" },
+    "defaultEffect": { "type": "string", "enum": ["deny", "allow"], "default": "deny" },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "effect", "actions", "resources"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "effect": { "type": "string", "enum": ["deny", "allow", "require-approval"] },
+          "actions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "resources": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "condition": { "type": "object", "additionalProperties": true },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

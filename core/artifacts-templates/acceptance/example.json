@@ -1,0 +1,24 @@
+[
+  {
+    "id": "ACC-001",
+    "statement": "Password reset email arrives within 60 seconds for valid accounts",
+    "howToVerify": {
+      "type": "script",
+      "command": "pytest tests/e2e_reset.py -q",
+      "expect": "exit 0 with delivery timestamp delta under 60s",
+      "timeoutS": 300
+    },
+    "oracleRef": "oracle/ACC-001.sh"
+  },
+  {
+    "id": "ACC-002",
+    "statement": "Reset tokens expire no later than 15 minutes after issue",
+    "howToVerify": {
+      "type": "script",
+      "command": "pytest tests/token_expiry.py -q",
+      "expect": "exit 0 with expired token rejected at 15m boundary",
+      "timeoutS": 300
+    },
+    "oracleRef": "oracle/ACC-002.sh"
+  }
+]

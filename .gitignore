@@ -1,0 +1,26 @@
+# Shiploom Core — local / generated / secrets (never commit secrets or oracles)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.conda/
+dist/
+build/
+*.egg-info/
+node_modules/
+# Oracle vault: hidden acceptance implementations — never commit, never feed to builder
+.shiploom/.oracle/
+# Local env / keys
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# Validator caches
+.validator-cache/
+.pytest_cache/

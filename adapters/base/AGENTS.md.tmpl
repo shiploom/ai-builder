@@ -1,0 +1,33 @@
+# AGENTS.md — {{projectName}}
+
+> DO NOT EDIT — generated from Shiploom core {{coreVersion}}; edit core source, then re-run `shiploom adapters --generate`.
+
+## Facts
+
+- Method: Shiploom Core {{coreVersion}} (`Specifier → Implementer → Verifier` + deterministic orchestrator + human).
+- Done is computed, never claimed: locked acceptance + hidden oracle + independent verifier + deterministic gates.
+- Default workflow: `{{workflow}}` (see `core/workflows/` in the Shiploom core install).
+
+## Conventions
+
+- Every artifact Markdown file carries YAML frontmatter (`id/kind/title/status/provenance/links/owner/version`).
+- Traceability `Requirement → Decision → Implementation → Test → Verification Result` via `links{}`.
+- Evidence grading in research: Fact / Inferred / Opinion / Marketing / Conflicting / Uncertain + source + date.
+- Secrets never in configs/artifacts/logs — env/keychain refs only (`env:NAME`).
+- Oracle vault `./.shiploom/.oracle/` is `0700`, gitignored, never fed to builder contexts.
+
+## Commands
+
+- `shiploom validate [--strict] [path]` — schemas + frontmatter + links (exit 0/2)
+- `shiploom status [--json]` — manifest + artifact states + budgets
+- `shiploom lock [--check]` — hash-lock acceptance + oracles
+- `shiploom run <workflow> [--from/--only/--resume]` — idempotent stepper
+- `shiploom approve <gate-id> [--deny --reason]` — record human gates
+- `shiploom verify [--report] [--gates a,b]` — deterministic gates + quality table
+- `shiploom doctor` — harness + MCP + toolchain compat (offline)
+
+## Nested scopes
+
+- Deeper `AGENTS.md` files override this one (closest wins).
+- `./.shiploom/` is orchestrator-owned (manifest/audit). Tools never write
+  artifacts except via orchestrator-validated transitions.
