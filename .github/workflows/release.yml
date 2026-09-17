@@ -5,7 +5,67 @@ on:
     tags: ["v*"]
 
 jobs:
+  go-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: gofmt clean
+        run: test -z "$(gofmt -l internal/ cmd/)"
+      - name: Go vet + tests
+        run: |
+          go vet ./...
+          go test ./...
+      - name: Stamped binary + parity
+        run: |
+          sh scripts/build-go.sh /tmp/shiploom-go
+          SHIPLOOM_SCHEMAS="$PWD/schemas" bash tests/parity/run.sh /tmp/shiploom-go
+      - name: AC demo under Go
+        run: |
+          pip install pytest
+          sh scripts/build-go.sh /tmp/shiploom-go
+          SHIPLOOM_GO_BIN=/tmp/shiploom-go sh scripts/ac-demo.sh
+
+  go-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64, ext: "" }
+          - { goos: linux, goarch: arm64, ext: "" }
+          - { goos: darwin, goarch: amd64, ext: "" }
+          - { goos: darwin, goarch: arm64, ext: "" }
+          - { goos: windows, goarch: amd64, ext: ".exe" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: Version check
+        run: test "${{ github.ref_name }}" = "v$(cat core/VERSION)"
+      - name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          VERSION="$(cat core/VERSION)"
+          mkdir -p dist
+          go build -trimpath \
+            -ldflags "-X github.com/shiploom/ai-builder/internal/version.CoreVersion=$VERSION" \
+            -o "dist/shiploom-$VERSION-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" \
+            ./cmd/shiploom
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shiploom-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/shiploom-*
+
   release:
+    needs: [go-verify, go-build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,6 +74,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
       - name: Install with dev extras
         run: pip install -e ".[dev]"
       - name: Tag matches core/VERSION and pyproject
@@ -49,10 +112,22 @@ jobs:
           pip install build cyclonedx-bom
           python -m build
           cyclonedx-py environment --output-format JSON --output-file dist/sbom.json
+          go list -m all > dist/go-modules.txt
+          printf 'stdlib-only Go binary: no third-party modules (see go-modules.txt)\n' > dist/go-sbom-note.txt
+      - name: Collect Go binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shiploom-*
+          path: dist/go-bin
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd dist/go-bin && sha256sum shiploom-* > ../shiploom-checksums.txt && cd ..
+          ls -la dist dist/go-bin
       - name: Create release with assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" \
-            --notes "See CHANGELOG.md for this release." dist/* || \
-          gh release upload "${{ github.ref_name }}" dist/* --clobber
+            --notes "See CHANGELOG.md for this release." dist/* dist/go-bin/* || \
+          gh release upload "${{ github.ref_name }}" dist/* dist/go-bin/* --clobber

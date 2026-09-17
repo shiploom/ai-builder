@@ -1,3 +1,6 @@
 # wrappers/ — install channels
 
-MVP primary: `pipx install .` / `uvx shiploom`. Thin `npx` wrapper deferred to Go-binary migration.
+Primary: Go single binary via `brew install shiploom/tap/shiploom`,
+`curl|sh` (`scripts/install.sh`), GitHub release assets, or
+`npx -y @shiploom/cli` (`wrappers/npx/`, thin launcher over the release
+binaries). Python fallback: `pipx install .` / `uvx shiploom`.

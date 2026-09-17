@@ -1,30 +1,39 @@
 # Install
 
-## Primary (today)
+## Primary: single Go binary (offline-first, stdlib-only)
+
+```bash
+brew install shiploom/tap/shiploom
+# or: curl -fsSL https://github.com/shiploom/ai-builder/releases/latest/download/install.sh | sh
+# or: download shiploom-<version>-<os>-<arch> from
+#     https://github.com/shiploom/ai-builder/releases
+# or: npx -y @shiploom/cli
+```
+
+~6MB, starts in ~5ms, no runtime to install. Requires nothing else;
+validators and orchestrator are compiled in.
+
+## Python fallback (pipx / uvx)
 
 ```bash
 pipx install git+https://github.com/shiploom/ai-builder.git
 # or: uvx --from git+https://github.com/shiploom/ai-builder shiploom
 ```
 
-Requires Python ≥3.9, no other runtime. Validators are stdlib-only.
+Requires Python ≥3.9, no other runtime. Same CLI surface, same exit
+codes; the Go binary is the default distribution.
 
 ## From source (contributors)
 
 ```bash
-uv venv && uv pip install -e ".[dev]"
+go build -trimpath -o shiploom ./cmd/shiploom   # Go binary
+uv venv && uv pip install -e ".[dev]"           # Python package
 shiploom doctor   # offline compat check, exit 0
 ```
 
 ## Verify the install
 
 ```bash
-shiploom --version   # tool + core + python versions
+shiploom --version   # tool + core + runtime versions
 shiploom doctor      # schemas, validators, harnesses, project state
 ```
-
-## Coming later
-
-- `brew tap shiploom/tap` once the tap repo exists (formula template:
-  `wrappers/brew/shiploom.rb`; URL + sha256 are filled at release time).
-- No Go single binary is planned (see spec §2.4: it pays off at 10k+ users).

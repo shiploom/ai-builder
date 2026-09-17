@@ -8,6 +8,8 @@ dist/
 build/
 *.egg-info/
 node_modules/
+# npx wrapper downloads the platform binary at install time
+wrappers/npx/vendor/
 # Oracle vault: hidden acceptance implementations — never commit, never feed to builder
 .shiploom/.oracle/
 # Local env / keys

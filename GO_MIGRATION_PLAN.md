@@ -47,7 +47,12 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   pattern), brew tap activation, formula from template, npx wrapper.
   Shipped first: AC demo under Go (`SHIPLOOM_GO_BIN` mode in
   `scripts/ac-demo.sh`, 54/54). Measured: 5.6MB binary (<10MB),
-  ~5ms cold start (<50ms).
+  ~5ms cold start (<50ms). Shipped second: `go-verify` + 5-platform
+  `go-build` matrix jobs in `release.yml` (checksums + Go module
+  manifest attached), Go source-build brew formula, `curl|sh`
+  installer (`scripts/install.sh`), thin npx launcher
+  (`wrappers/npx`, `@shiploom/cli`), and the `docs/install.md`
+  rewrite (Go binary primary, Python fallback).
 - P6: transition — dual-ship with version-parity check, Python fallback
   deprecated one minor after Go parity, then removed.
 
