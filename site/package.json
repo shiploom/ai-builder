@@ -1,0 +1,29 @@
+{
+  "name": "shiploom-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shiploom documentation site (Next.js + Fumadocs). Content syncs from ../docs via scripts/sync-docs.mjs.",
+  "scripts": {
+    "docs:sync": "node scripts/sync-docs.mjs",
+    "docs:check": "node scripts/sync-docs.mjs --check",
+    "predev": "npm run docs:sync",
+    "prebuild": "npm run docs:sync",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "fumadocs-core": "latest",
+    "fumadocs-mdx": "latest",
+    "fumadocs-ui": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

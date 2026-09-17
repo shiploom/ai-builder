@@ -1,0 +1,53 @@
+---
+title: Consumer manual
+description: Task-oriented paths J1–J4
+---
+
+# Consumer manual (J1–J4)
+
+Task-oriented paths. Every path ends at human gates — autonomy stops where
+irreversibility starts.
+
+## J1 — Idea to MVP (greenfield)
+
+```bash
+shiploom init --green
+# edit idea.md (problem, users, HYP-xxx, scope, open questions)
+shiploom run greenfield-full-lite        # pauses: missing research files
+# ...harness drafts research/* (market-research skill)...
+shiploom run greenfield-full-lite        # pauses: scope-approval
+shiploom approve scope-approval
+# ...product/*, architecture/* drafted (product-definition, architecture-design)...
+shiploom approve arch-approval
+# ...acceptance/*.json + oracle/ drafted (spec-to-acceptance)...
+shiploom lock                            # hash-locks criteria + oracles
+shiploom run greenfield-full-lite        # implement → verify (gates + twin)
+shiploom approve merge-approval
+shiploom run greenfield-full-lite        # complete
+```
+
+## J2 — Scoped brownfield fix
+
+```bash
+shiploom init --existing
+shiploom run brownfield-fix             # pauses: missing repo-map
+# ...brownfield/repo-map.md (brownfield-map skill, confidence notes)...
+shiploom approve map-approval
+# ...brownfield/impact-plan.md + characterization tests (impact-analysis)...
+shiploom approve plan-approval
+# ...attempt-log, verification twin...
+shiploom approve merge-approval
+shiploom run brownfield-fix            # complete; merge approval is audited
+```
+
+## J3 — Team feature
+
+One slice per service/file (feature-plan), orchestrator-sequenced merges,
+independent verifiers per slice, policy gates before shared-infra touches.
+PRs carry trace links (`shiploom trace REQ-xxx`).
+
+## J4 — Enterprise hardening
+
+Overlay a policy pack (`shiploom add policy <name> --from ...`), require
+attested MCP servers in `mcp-registry.json`, keep SAST/dep-audit gates green,
+export the audit log (`shiploom audit --export md`) for review.

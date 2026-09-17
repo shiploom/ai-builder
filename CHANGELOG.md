@@ -3,6 +3,14 @@
 All notable changes, newest first. Version is `core/VERSION`
 (`1.0.0-draft` throughout the MVP series).
 
+## PR15 — Docs site scaffold (unreleased)
+
+- `site/` (Next.js + Fumadocs, static export): landing page + `/docs`
+  generated from `docs/` via `scripts/sync-docs.mjs` (frontmatter injection,
+  JSX-safe escaping, `--self-test`, CI drift gate `--check`).
+- Pinned against installed APIs (provider/next, layouts/docs, mdx config);
+  system font stack (no build-time font downloads).
+
 ## PR14 — Releases, distribution, docs (unreleased)
 
 - 1.0.0: `core/VERSION` + `pyproject.toml` bumped (semver policy in

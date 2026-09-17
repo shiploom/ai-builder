@@ -1,0 +1,4 @@
+{
+  "title": "Documentation",
+  "pages": ["index", "manual", "install", "policy-cookbook", "brownfield-playbook", "cost-dashboard", "release"]
+}

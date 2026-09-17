@@ -11,6 +11,7 @@ Portable, zero-runtime AI software engineering layer: `Specifier → Implementer
 - Adapters: `adapters/{base,claude,opencode}/`
 - Examples: `examples/`
 - Tests: `tests/`
+- Docs: `docs/` (sources of truth) + `site/` (Next.js + Fumadocs, `cd site && npm install && npm run dev`)
 
 ## Quickstart (MVP, Python+uv)
 

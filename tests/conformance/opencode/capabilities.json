@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shiploom.dev/conformance/opencode-capabilities",
   "title": "Shiploom conformance profile: OpenCode",
-  "description": "Base-spec subset: unknown frontmatter fields ignored, facts via AGENTS.md. opencode.json generation deferred until pinned against vendor docs; per-skill permissions post-MVP (PR10 closed).",
+  "description": "Base-spec subset: unknown frontmatter fields ignored, facts via AGENTS.md. opencode.json generated (pinned against vendor docs PR12); per-skill permissions post-MVP.",
   "harness": "opencode",
   "version": "1.1.0",
   "skillFieldsHonored": ["name", "description", "license", "compatibility", "metadata"],

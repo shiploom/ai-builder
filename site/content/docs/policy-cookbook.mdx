@@ -1,0 +1,46 @@
+---
+title: Policy cookbook
+description: Default-deny packs, gates, and approvals
+---
+
+# Policy cookbook
+
+The default pack (`core/policies/default.json`) denies destructive actions
+(`infra.destroy`, `db.destroy`, `db.migrate-prod`, `secret.exfiltrate`),
+requires approval for deploys, protected merges, spend, and provisioning,
+and allows read-local work. Default effect is deny.
+
+## Writing a pack
+
+Packs follow `schemas/policy.schema.json`: `{policyId, version,
+defaultEffect, rules[]}` where each rule has `{id, effect, actions[],
+resources[], condition?, message?}`. Actions/resources are `*` globs;
+`condition` maps context keys (`actor`, `workflow`, `step`) to required
+values. Precedence: deny beats require-approval beats allow; conditional
+rules win ties at the same effect.
+
+## Wiring a policy gate
+
+```yaml
+- id: ship-prod
+  gate: policy
+  action: deploy.prod
+  resource: prod
+  produces: [idea.md]
+```
+
+`shiploom run` evaluates the step: `deny` exits 3 with rule attribution
+(audit `run.policy.deny`); `require-approval` pauses until
+`shiploom approve ship-prod`; `allow` proceeds. Omit `policy:` to use the
+default pack, or point it at a project pack (e.g. `policies/team.json`).
+
+## Approving
+
+```bash
+shiploom approvals              # what is pending, with attempts + reasons
+shiploom approve ship-prod --reason "..."
+shiploom approve ship-prod --deny --reason "..."   # reason mandatory
+```
+
+Denied gates halt `run` with exit 2 until re-approved. Every decision lands
+in the hash-chained audit log.

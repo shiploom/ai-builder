@@ -7,6 +7,8 @@ on:
       - "schemas/**"
       - "tests/**"
       - "pyproject.toml"
+      - "docs/**"
+      - "site/**"
       - ".github/workflows/validator.yml"
   pull_request:
     paths:
@@ -14,6 +16,8 @@ on:
       - "schemas/**"
       - "tests/**"
       - "pyproject.toml"
+      - "docs/**"
+      - "site/**"
 
 jobs:
   validate:
@@ -46,3 +50,20 @@ jobs:
         run: SHIP_PY="$(command -v python)" sh scripts/ac-demo.sh
       - name: Harness conformance (deterministic, no LLM calls)
         run: shiploom conformance --harness all
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Docs sync check + self-test + static build
+        working-directory: site
+        run: |
+          node scripts/sync-docs.mjs --self-test
+          node scripts/sync-docs.mjs --check
+          npm ci --no-audit --no-fund
+          npm run build

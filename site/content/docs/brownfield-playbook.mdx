@@ -1,0 +1,34 @@
+---
+title: Brownfield playbook
+description: Map, impact, characterize, change, verify
+---
+
+# Brownfield playbook
+
+## Map before you touch
+
+`brownfield-map` produces `repo-map.md` from the symbol graph plus build
+and test evidence — never a file listing. Low-confidence areas are marked
+and narrow every downstream write scope. Muted-repo masks (`archive/`,
+generated code) prevent extrapolating dead conventions.
+
+## Plan the blast radius
+
+`impact-analysis` produces `impact-plan.md`: touched files, direct callers,
+shared types, migrations, per-item rollback. Get `plan-approval` before any
+edit. Cross-cutting refactors become their own slices, never stowaways.
+
+## Characterize, then change
+
+Capture pre-change behavior snapshots for every touched behavior first
+(`tests/test_legacy.py` pattern in `examples/brownfield-sample/`). Where
+regression coverage is thin, write the residual risk down for human sign-off
+— the orchestrator accepts explicit risk notes, never silent gaps.
+
+## Verify differentially
+
+`regression-verify` runs the full gate set plus the report twin, and the
+verifier diffs characterization snapshots pre/post alongside contracts and
+invariants (row counts, idempotency). Regressions fail regardless of
+new-behavior passes. Debt found along the way goes to `debt-register.md`,
+not into the diff (Simplicity Gate).

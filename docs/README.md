@@ -1,3 +1,7 @@
-# docs/ — plain Markdown for MVP
+# docs/ — Markdown sources of truth + site
 
-Fumadocs site deferred post-MVP (BUILD_PLAN §2). Consumer manual (J1–J4), policy cookbook, brownfield playbook live here first.
+These files are the single source of truth. `../site/` renders them via
+`npm run docs:sync` (frontmatter injection + JSX-safe escaping); drift is
+CI-gated (`docs:check`). Consumer manual (J1–J4), policy cookbook,
+brownfield playbook live here. No hosting wired yet — `npm run build`
+produces a static `out/` directory.
