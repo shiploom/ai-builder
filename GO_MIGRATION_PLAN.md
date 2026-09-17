@@ -30,7 +30,10 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   `trace` (`--json`, sorted relations/incoming) + `approve`
   (`--deny`/`--reason`/`--actor`/`--json`) + `budget`
   (`--set`/`--actor`/`--json`/`[path]`) + `resume`
-  (`--budget`/`--actor`/`--json`, position + stepper). Parity 49/49.
+  (`--budget`/`--actor`/`--json`, position + stepper) + `audit`
+  (`--export json|md`) + `characterize`
+  (`--capture`/`--diff`/`--list`, `--command`/`--timeout`/`--actor`/`--json`).
+  Parity 56/56.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -146,3 +149,25 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
 - `resume`: bound-workflow guard, budget parsing, workflow order, pending
   gates, and position (`done/total/next/pendingGates`, `next: complete`
   when done) match; then the stepper report reuses run's human lines.
+
+## Port notes (P4) — audit/characterize fidelity contract
+
+- `audit`: `Verify` runs first in every mode (exit from chain health);
+  `--export` accepts space and `=` forms with `json|md` choices enforced.
+  JSON (`ok/errors/entries`) and md table match; human
+  (`audit: N entries, chain ok/BROKEN`) matches. Fixtures pre-build the
+  log via `budget --set` in setup so both runtimes replay identical
+  timestamps/hashes (pristine seed copies).
+- `characterize`: required-exclusive `--capture|--diff|--list` enforced;
+  `--command`/`--timeout`/`--actor` accept space and `=`; `--timeout`
+  parses like `type=int` (trims space, tolerates `_`), negatives fail.
+  List (`snapshots: a, b` or `none`), capture
+  (`captured NAME: exit N sha LAST12`), and diff (`unchanged:` /
+  `changed: NAME (exitChanged=X, outputChanged=Y)` + `  ` lines) match;
+  diff-missing (`no snapshot %r...`, exit 2) matches.
+- Fixed a latent P2 divergence in `internal/characterize`: snapshot-name
+  quoting now uses `validate.PyRepr` (single-quote preference, not `%q`),
+  and the missing-file error synthesizes the `[Errno 2] ...` text like
+  `run.LoadManifest` does. Capture `--json` still exposes an int/float
+  `timeoutS` difference (Python `600` vs Go `600.0`), so parity fixtures
+  use human output only.

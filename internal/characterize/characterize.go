@@ -20,6 +20,7 @@ import (
 	"github.com/shiploom/ai-builder/internal/execrun"
 	"github.com/shiploom/ai-builder/internal/jsoncanon"
 	"github.com/shiploom/ai-builder/internal/manifest"
+	"github.com/shiploom/ai-builder/internal/validate"
 )
 
 // SnapshotDirname is the snapshot directory under .shiploom/.
@@ -46,14 +47,13 @@ func SnapshotDir(projectDir string) string {
 
 func checkName(name string) error {
 	if !nameRe.MatchString(name) {
-		return fmt.Errorf("bad snapshot name %q (letters/digits/._-, max 64)", name)
+		return fmt.Errorf("bad snapshot name %s (letters/digits/._-, max 64)", validate.PyRepr(name))
 	}
 	return nil
 }
 
-// message parity note: Python formats %r of the name (single-quoted for
-// these inputs); %q matches for names without quotes/backslashes, which
-// the regex above guarantees. Identical output on all valid inputs.
+// message parity note: Python formats %r of the name (single-quote
+// preference); validate.PyRepr mirrors it exactly.
 
 // resolveCommand mirrors _resolve_command().
 func resolveCommand(projectDir, command string, timeoutS float64) (string, float64, error) {
@@ -115,20 +115,29 @@ func load(projectDir, name string) (map[string]any, error) {
 	if err := checkName(name); err != nil {
 		return nil, err
 	}
-	raw, err := os.ReadFile(filepath.Join(SnapshotDir(projectDir), name+".json"))
+	snapPath := filepath.Join(SnapshotDir(projectDir), name+".json")
+	raw, err := os.ReadFile(snapPath)
 	if err != nil {
-		return nil, fmt.Errorf("no snapshot %q (capture first): %s", name, fsErrText(err))
+		// Byte-parity with FileNotFoundError str() for the missing-file
+		// case (same synthesis as run.LoadManifest); other OSError
+		// texts differ (documented divergence).
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("no snapshot %s (capture first): [Errno 2] No such file or directory: '%s'",
+				validate.PyRepr(name), snapPath)
+		}
+		return nil, fmt.Errorf("no snapshot %s (capture first): %s",
+			validate.PyRepr(name), fsErrText(err))
 	}
 	doc, err := jsoncanon.Decode(raw)
 	if err != nil {
-		return nil, fmt.Errorf("no snapshot %q (capture first): %s", name, err)
+		return nil, fmt.Errorf("no snapshot %s (capture first): %s", validate.PyRepr(name), err)
 	}
 	obj, ok := doc.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("corrupt snapshot %q (recapture)", name)
+		return nil, fmt.Errorf("corrupt snapshot %s (recapture)", validate.PyRepr(name))
 	}
 	if _, ok := obj["outputSha"]; !ok {
-		return nil, fmt.Errorf("corrupt snapshot %q (recapture)", name)
+		return nil, fmt.Errorf("corrupt snapshot %s (recapture)", validate.PyRepr(name))
 	}
 	return obj, nil
 }
