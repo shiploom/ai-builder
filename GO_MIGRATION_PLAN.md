@@ -38,7 +38,9 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   (`--dry-run`/`--rollback`/`--actor`/`--json`, backup + validation
   gate) + `adapters` (`--list`/`--generate`/`--json`, idempotent harness
   files) + `add` (`--from`/`--tag`/`--force`/`--actor`/`--json`, overlay
-  packs with strict validation + rollback). Parity 70/70.
+  packs with strict validation + rollback) + `conformance`
+  (`--harness`/`--record`/`--json`, scratch-generate + profile checks).
+  Parity 73/73.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -238,3 +240,18 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   lines; hashes are unchanged (still compact-canonical) and the
   cross-implementation interop test still passes. Hash equality across
   implementations was re-verified on a shared chain.
+
+## Port notes (P4) — conformance fidelity contract
+
+- New `internal/conformance` library reuses the ported
+  `adapters.Generate` (scratch dir), `validate.ValidatePath` (strict
+  skill checks), and `validate.ParseFrontmatter` (generated-vs-core
+  identity via deep equality). Guard behavior replays the fixture event
+  through the operator `python3` (30s cap) with the same deny/silence
+  rules; empty stdout parses as `{}` exactly like `json.loads(... or
+  "{}")`. Opencode `instructions` honors both list-membership and
+  string-substring shapes, like Python's `in`.
+- Record writes (`--record`, under the tool's `tests/conformance/
+  _records/`) share byte shapes with the library writer; fixtures never
+  use `--record` (it would dirty the repo). Reports carry no durations
+  or timestamps, so human and JSON outputs are both parity-safe.
