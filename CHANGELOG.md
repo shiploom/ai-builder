@@ -1,7 +1,16 @@
 # Changelog
 
 All notable changes, newest first. Version is `core/VERSION`
-(`1.0.0-draft` throughout the MVP series).
+(semver since 1.0.0; pre-release series was `1.0.0-draft`).
+
+## PR17 — Characterization capture/diff (unreleased)
+
+- `shiploom characterize --capture NAME [--command CMD] | --diff NAME | --list`:
+  behavior snapshots under `./.shiploom/characterization/` (command, exit,
+  output hash, capped tail). Changed snapshots warn (review at
+  merge-approval), tool errors fail; names restricted against traversal.
+- `regression-verify`/`verify` diff snapshots automatically; `run` surfaces
+  checker warnings in human and JSON reports.
 
 ## PR16 — MCP attestation groundwork (unreleased)
 

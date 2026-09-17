@@ -145,10 +145,11 @@ def run_workflow(project_dir, workflow_name, from_step=None, only=None,
     """Advance the workflow. Returns (exit_code, report).
 
     report: {"workflow", "advanced": [step ids completed this run],
-             "paused": reason|None, "completed": bool, "errors": []}.
+             "paused": reason|None, "completed": bool, "errors": [],
+             "warnings": [{path, message}]}.
     """
     report = {"workflow": workflow_name, "advanced": [], "paused": None,
-              "completed": False, "errors": []}
+              "completed": False, "errors": [], "warnings": []}
     root = Path(project_dir)
 
     wf_path = find_workflow(workflow_name, root)
@@ -311,7 +312,8 @@ def run_workflow(project_dir, workflow_name, from_step=None, only=None,
                     return EXIT_OK, report
             # allow: proceed; fall through to produces check
         elif gate == "verification":
-            outcome, verrs, _ = _check_verification_gate(sid, root)
+            outcome, verrs, vwarns = _check_verification_gate(sid, root)
+            report["warnings"].extend(vwarns)
             if outcome is None:
                 manifest_mod.save(root, data)
                 _pause(report, "no verification checker wired for %r (PR8)" % sid)

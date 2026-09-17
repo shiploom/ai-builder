@@ -21,6 +21,7 @@ from cli import adapters as adapters_mod  # noqa: E402
 from cli import add as add_mod  # noqa: E402
 from cli import approvals as approvals_mod  # noqa: E402
 from cli import auditlog  # noqa: E402
+from cli import characterize as characterize_mod  # noqa: E402
 from cli import conformance as conformance_mod  # noqa: E402
 from cli import doctor as doctor_mod  # noqa: E402
 from cli import gates as gates_mod  # noqa: E402
@@ -203,6 +204,8 @@ def _print_run_report(report):
         sys.stdout.write("paused: %s\n" % report["paused"])
     for err in report["errors"]:
         sys.stdout.write("  fail: %s\n" % err)
+    for warn in report.get("warnings", []):
+        sys.stdout.write("  warn: %s: %s\n" % (warn.get("path", "?"), warn["message"]))
 
 
 def cmd_run(args):
@@ -669,7 +672,72 @@ def build_parser():
     upgrade.add_argument("--json", action="store_true")
     upgrade.set_defaults(func=cmd_upgrade)
 
+    characterize = sub.add_parser("characterize", help="capture/diff behavior snapshots (report-only)")
+    mode = characterize.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--capture", metavar="NAME", help="run command and store snapshot NAME")
+    mode.add_argument("--diff", metavar="NAME", help="re-run snapshot NAME and compare")
+    mode.add_argument("--list", action="store_true", help="list snapshot names")
+    characterize.add_argument("--command", dest="shell_command", default=None,
+                              help="command to run (default: test gate)")
+    characterize.add_argument("--timeout", type=int, default=0, help="seconds (default: gate/600)")
+    characterize.add_argument("--actor", default="human")
+    characterize.add_argument("--json", action="store_true")
+    characterize.set_defaults(func=cmd_characterize)
+
     return parser
+
+
+def cmd_characterize(args):
+    if args.timeout < 0:
+        return _fail("--timeout must be >= 0")
+    if args.list:
+        names = characterize_mod.list_snapshots(".")
+        if args.json:
+            json.dump({"ok": True, "snapshots": names},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            sys.stdout.write("snapshots: %s\n" % (", ".join(names) or "none"))
+        return EXIT_OK
+    if args.capture:
+        try:
+            entry = characterize_mod.capture(".", args.capture, command=args.shell_command,
+                                             timeout_s=args.timeout, actor=args.actor)
+        except ValueError as exc:
+            return _fail(str(exc))
+        if args.json:
+            json.dump({"ok": True, "snapshot": entry},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            sys.stdout.write("captured %s: exit %s sha %s\n"
+                             % (entry["name"], entry["exit"],
+                                entry["outputSha"][-12:]))
+        return EXIT_OK
+    try:
+        result = characterize_mod.diff(".", args.diff, timeout_s=args.timeout)
+    except ValueError as exc:
+        return _fail(str(exc))
+    if result.get("error"):
+        if args.json:
+            json.dump({"ok": False, "result": result},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            sys.stdout.write("diff %s error: %s\n" % (args.diff, result["error"]))
+        return EXIT_VALIDATION
+    if args.json:
+        json.dump({"ok": True, "result": result},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    elif not result.get("changed"):
+        sys.stdout.write("unchanged: %s\n" % result["name"])
+    else:
+        sys.stdout.write("changed: %s (exitChanged=%s, outputChanged=%s)\n" % (
+            result["name"], result.get("exitChanged"), result.get("outputChanged")))
+        for line in result.get("unifiedDiff", []):
+            sys.stdout.write("  %s\n" % line.rstrip("\n"))
+    return EXIT_OK
 
 
 def cmd_conformance(args):

@@ -39,4 +39,6 @@ Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--js
   > allow; conditional rules win ties). Policy gates deny with exit 3.
 - `mcp.py` — capability → provider-chain resolution + quarantine flags +
   attestation statuses (attested/unverified/unattested) + registry summary.
+- `characterize.py` — behavior-snapshot capture/diff (report-only; changed
+  snapshots warn at verify, tool errors fail).
 - `shiploom.py` — parser + subcommands. Exit codes: 0/2/3/4/5 per AGENTS.md.

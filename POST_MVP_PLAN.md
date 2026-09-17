@@ -1,6 +1,6 @@
 # Post-MVP Plan (PR11–PR14 + backlog)
 
-**Date:** 2026-09-17 · **Status:** PR11–PR15 complete; PR16 (MCP attestation groundwork) in progress
+**Date:** 2026-09-17 · **Status:** PR11–PR16 complete; PR17 (characterization capture/diff) in progress
 (Hosting still open — `npm run build` produces a static `out/` directory.)
 **Decisions locked:** CLI completeness leads; stay on Python+uv (Go revisit only
 at 10k-user scale per spec §2.4); no third harness; no enterprise pilot waiting

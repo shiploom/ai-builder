@@ -20,6 +20,20 @@ Capture pre-change behavior snapshots for every touched behavior first
 regression coverage is thin, write the residual risk down for human sign-off
 — the orchestrator accepts explicit risk notes, never silent gaps.
 
+Snapshot tooling (report-only — changed snapshots warn, never fail):
+
+```bash
+shiploom characterize --capture listing --command "pytest tests/test_legacy.py -q"
+# ... make the change ...
+shiploom characterize --diff listing     # unified diff on change, exit 0
+shiploom characterize --list
+```
+
+Snapshots live in `./.shiploom/characterization/<name>.json` (command, exit,
+output hash, capped tail). `regression-verify` diffs them automatically and
+surfaces behavior change as warnings for merge-approval review. Names are
+restricted to letters/digits/`._-` (no path traversal).
+
 ## Verify differentially
 
 `regression-verify` runs the full gate set plus the report twin, and the

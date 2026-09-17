@@ -513,4 +513,17 @@ def verify_step_check(project_dir):
         if oracle_files:
             return False, [{"path": str(root),
                             "message": "acceptance present but not locked"}], []
-    return True, [], []
+    from cli import characterize as _characterize
+    snap_warnings = []
+    for name in _characterize.list_snapshots(root):
+        result = _characterize.diff(root, name)
+        if result.get("error"):
+            return False, [{"path": ".shiploom/characterization/%s.json" % name,
+                            "message": "snapshot diff error: %s" % result["error"]}], []
+        if result.get("changed"):
+            snap_warnings.append(
+                {"path": ".shiploom/characterization/%s.json" % name,
+                 "message": "behavior changed since capture "
+                            "(exitChanged=%s, outputChanged=%s); review diff at merge-approval"
+                            % (result.get("exitChanged"), result.get("outputChanged"))})
+    return True, [], snap_warnings
