@@ -32,8 +32,9 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   (`--set`/`--actor`/`--json`/`[path]`) + `resume`
   (`--budget`/`--actor`/`--json`, position + stepper) + `audit`
   (`--export json|md`) + `characterize`
-  (`--capture`/`--diff`/`--list`, `--command`/`--timeout`/`--actor`/`--json`).
-  Parity 56/56.
+  (`--capture`/`--diff`/`--list`, `--command`/`--timeout`/`--actor`/`--json`) +
+  `doctor` (`--json`, offline toolchain/harness/project checks, exit 5 on
+  failure). Parity 59/59.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -171,3 +172,20 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   `run.LoadManifest` does. Capture `--json` still exposes an int/float
   `timeoutS` difference (Python `600` vs Go `600.0`), so parity fixtures
   use human output only.
+
+## Port notes (P4) — doctor fidelity contract
+
+- New `internal/doctor` library mirrors `run_checks()`: Python version
+  (via the operator `python3`, same binary the harness uses), `core/VERSION`,
+  9 normative schemas (`$schema`/`$id` shape check), harness `claude`/
+  `opencode` via `LookPath`, project config/manifest/audit/oracle-mode/
+  mcp-registry (via the ported `mcp.AttestationStatus`), and `git`.
+- Deliberate shims (documented): the `validators` check always passes
+  (the Go binary embeds the port); missing-`python3` fails with a
+  `requires >=3.9` message that has no Python-side counterpart (fixtures
+  always have `python3`). Runtime `normalize.sed` already masks the
+  `Python X.Y.Z` version string.
+- Exit `5` (harness mismatch) on any failure; human
+  (`shiploom doctor: OK/PROBLEMS (N fail, M warn)`, `[STAT] name detail`)
+  and JSON (`ok/checks/failures/warnings`) match. Fixtures pre-build
+  config/manifest/audit/oracle/registry in setup for determinism.
