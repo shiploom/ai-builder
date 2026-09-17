@@ -9,6 +9,10 @@ on:
       - "pyproject.toml"
       - "docs/**"
       - "site/**"
+      - "cmd/**"
+      - "internal/**"
+      - "go.mod"
+      - "scripts/build-go.sh"
       - ".github/workflows/validator.yml"
   pull_request:
     paths:
@@ -18,6 +22,10 @@ on:
       - "pyproject.toml"
       - "docs/**"
       - "site/**"
+      - "cmd/**"
+      - "internal/**"
+      - "go.mod"
+      - "scripts/build-go.sh"
 
 jobs:
   validate:
@@ -50,6 +58,26 @@ jobs:
         run: SHIP_PY="$(command -v python)" sh scripts/ac-demo.sh
       - name: Harness conformance (deterministic, no LLM calls)
         run: shiploom conformance --harness all
+
+  go-port:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Format, vet, unit test
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go vet ./cmd/... ./internal/...
+          go test ./cmd/... ./internal/...
+      - name: Golden parity vs Python reference
+        run: |
+          sh scripts/build-go.sh /tmp/shiploom-go
+          sh tests/parity/run.sh /tmp/shiploom-go
 
   docs:
     runs-on: ubuntu-latest

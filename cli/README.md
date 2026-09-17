@@ -42,3 +42,10 @@ Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--js
 - `characterize.py` — behavior-snapshot capture/diff (report-only; changed
   snapshots warn at verify, tool errors fail).
 - `shiploom.py` — parser + subcommands. Exit codes: 0/2/3/4/5 per AGENTS.md.
+
+## Go port (in progress, see GO_MIGRATION_PLAN.md)
+
+`cmd/shiploom/` + `internal/` mirror this surface stdlib-only; `tests/parity/`
+holds the golden harness (Python reference vs Go binary). Until a command's
+`Run` is ported, the Go binary fails closed (exit 2) with a Python-fallback
+pointer — never partial behavior.

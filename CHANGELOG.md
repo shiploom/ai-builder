@@ -3,6 +3,15 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## PR23 — Go port P1: scaffold + parity harness (unreleased)
+
+- `go.mod` (`github.com/shiploom/ai-builder`, stdlib-only), `cmd/shiploom`,
+  `internal/cli` (20-command table, exit-code contract, argparse-mirroring
+  errors), `internal/version` (ldflags-stamped core version).
+- `tests/parity/run.sh` golden harness (normalized stdout/exit comparison,
+  needle matching) with version/no-args/bad-command cases; `scripts/build-go.sh`
+  stamped builder; CI `go-port` job (gofmt/vet/test/parity).
+
 ## 1.1.0 (2026-09-17)
 
 Additive minor: CLI completeness (PR11), adapter configs + conformance runner
