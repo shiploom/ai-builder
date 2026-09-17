@@ -75,7 +75,7 @@ func InitLog(projectDir string) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	line, err := jsoncanon.MarshalCompact(genesis)
+	line, err := jsoncanon.MarshalLine(genesis)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func Append(projectDir, actor, action, target, policy string) (map[string]any, e
 	if err != nil {
 		return nil, err
 	}
-	line, err := jsoncanon.MarshalCompact(entry)
+	line, err := jsoncanon.MarshalLine(entry)
 	if err != nil {
 		return nil, err
 	}

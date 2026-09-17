@@ -146,6 +146,17 @@ func writeValue(b *strings.Builder, v any, level int) error {
 	}
 }
 
+// MarshalLine renders v like json.dumps(sort_keys=True) with CPython
+// default separators (", ", ": ") on a single line — the audit.jsonl
+// line format.
+func MarshalLine(v any) ([]byte, error) {
+	var b strings.Builder
+	if err := writeLine(&b, v); err != nil {
+		return nil, err
+	}
+	return []byte(b.String()), nil
+}
+
 func writeCompact(b *strings.Builder, v any) error {
 	switch t := v.(type) {
 	case map[string]any:
@@ -178,6 +189,76 @@ func writeCompact(b *strings.Builder, v any) error {
 				b.WriteString(",")
 			}
 			if err := writeCompact(b, item); err != nil {
+				return err
+			}
+		}
+		b.WriteString("]")
+		return nil
+	case string:
+		appendJSONString(b, t)
+		return nil
+	case bool:
+		if t {
+			b.WriteString("true")
+		} else {
+			b.WriteString("false")
+		}
+		return nil
+	case nil:
+		b.WriteString("null")
+		return nil
+	case json.Number:
+		if !validNumberLiteral(string(t)) {
+			return fmt.Errorf("invalid number literal %q", string(t))
+		}
+		b.WriteString(string(t))
+		return nil
+	case int:
+		b.WriteString(strconv.Itoa(t))
+		return nil
+	case int64:
+		b.WriteString(strconv.FormatInt(t, 10))
+		return nil
+	case float64:
+		b.WriteString(pyFloat(t))
+		return nil
+	default:
+		return fmt.Errorf("unsupported type %T", v)
+	}
+}
+
+func writeLine(b *strings.Builder, v any) error {
+	switch t := v.(type) {
+	case map[string]any:
+		if len(t) == 0 {
+			b.WriteString("{}")
+			return nil
+		}
+		b.WriteString("{")
+		keys := sortedKeys(t)
+		for i, k := range keys {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			appendJSONString(b, k)
+			b.WriteString(": ")
+			if err := writeLine(b, t[k]); err != nil {
+				return err
+			}
+		}
+		b.WriteString("}")
+		return nil
+	case []any:
+		if len(t) == 0 {
+			b.WriteString("[]")
+			return nil
+		}
+		b.WriteString("[")
+		for i, item := range t {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			if err := writeLine(b, item); err != nil {
 				return err
 			}
 		}

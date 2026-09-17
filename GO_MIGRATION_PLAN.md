@@ -36,7 +36,9 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   `doctor` (`--json`, offline toolchain/harness/project checks, exit 5 on
   failure) + `pin` (`--check`/`--json`, reproducibility pin) + `upgrade`
   (`--dry-run`/`--rollback`/`--actor`/`--json`, backup + validation
-  gate). Parity 65/65.
+  gate) + `adapters` (`--list`/`--generate`/`--json`, idempotent harness
+  files) + `add` (`--from`/`--tag`/`--force`/`--actor`/`--json`, overlay
+  packs with strict validation + rollback). Parity 70/70.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -212,3 +214,27 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   and snapshots only) to audit-log reads, doctor config/manifest reads,
   and upgrade config/backup/pin reads — all verified byte-identical
   against FileNotFoundError text.
+
+## Port notes (P4) — adapters/add fidelity contract
+
+- New `internal/adapters` library mirrors template substitution
+  (`{{projectName, coreVersion, workflow}}`, unknown vars verbatim),
+  skill-header insertion after frontmatter, sorted outputs/skills, and
+  the `created/updated/unchanged` write journal (hooks get `+x`).
+  `all` folds per-adapter reports. `unknown adapter %r` / `bad
+  mapping.json for %r` match; JSON parse details stay engine-suffixed
+  (documented). Outputs list relative paths only, so the
+  `projectName`-in-content difference between `py/` and `go/` copies
+  never reaches parity comparisons.
+- New `internal/add` library mirrors kind/name/source validation,
+  local-vs-git fetch (shallow tag-pinned clone, 120s cap), dir/file
+  payload location, mode-preserving copy (`__pycache__` skipped),
+  strict validation with the `links.dangling` carve-out, rollback, and
+  unsigned provenance (`tag: null` when absent).
+- Fixed a latent P2 doc-vs-code mismatch in `internal/auditlog`: the
+  package doc always promised spaced `json.dump`-default file lines but
+  the code wrote compact lines. New `jsoncanon.MarshalLine` (sorted
+  keys, `", "`/`": "` separators, single line) is now used for log
+  lines; hashes are unchanged (still compact-canonical) and the
+  cross-implementation interop test still passes. Hash equality across
+  implementations was re-verified on a shared chain.
