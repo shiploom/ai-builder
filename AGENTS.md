@@ -28,6 +28,11 @@
 - `shiploom approve <gate-id> [--deny --reason]` — record human gates
 - `shiploom verify [--report] [--gates a,b]` — deterministic gates + quality table
 - `shiploom adapters --list | --generate <harness|all>` — harness file generation
+- `shiploom trace <id> [path]` — trace subgraph + referenced-by
+- `shiploom budget [--set K=V]` — manifest budget limits
+- `shiploom resume` — position report + advance bound workflow
+- `shiploom approvals [--watch]` — pending human gates
+- `shiploom add <kind> <name> --from SRC [--tag]` — overlay content packs
 - `pytest tests/unit -q` — hermetic unit tests (no network)
 
 ## Nested scopes

@@ -18,6 +18,8 @@ TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
 
 from cli import adapters as adapters_mod  # noqa: E402
+from cli import add as add_mod  # noqa: E402
+from cli import approvals as approvals_mod  # noqa: E402
 from cli import auditlog  # noqa: E402
 from cli import doctor as doctor_mod  # noqa: E402
 from cli import gates as gates_mod  # noqa: E402
@@ -25,6 +27,7 @@ from cli import manifest as manifest_mod  # noqa: E402
 from cli import oracle as oracle_mod  # noqa: E402
 from cli import run as run_mod  # noqa: E402
 from validators import status as status_mod  # noqa: E402
+from validators import trace as trace_mod  # noqa: E402
 from validators import validate as validator  # noqa: E402
 
 EXIT_OK = 0
@@ -190,6 +193,17 @@ def cmd_status(args):
     return EXIT_OK
 
 
+def _print_run_report(report):
+    if report["advanced"]:
+        sys.stdout.write("advanced: %s\n" % ", ".join(report["advanced"]))
+    if report["completed"]:
+        sys.stdout.write("workflow %s complete\n" % report["workflow"])
+    elif report["paused"]:
+        sys.stdout.write("paused: %s\n" % report["paused"])
+    for err in report["errors"]:
+        sys.stdout.write("  fail: %s\n" % err)
+
+
 def cmd_run(args):
     try:
         budgets = run_mod.parse_budget_flags(args.budget)
@@ -203,15 +217,177 @@ def cmd_run(args):
                   sys.stdout, indent=2, sort_keys=True)
         sys.stdout.write("\n")
     else:
-        if report["advanced"]:
-            sys.stdout.write("advanced: %s\n" % ", ".join(report["advanced"]))
-        if report["completed"]:
-            sys.stdout.write("workflow %s complete\n" % report["workflow"])
-        elif report["paused"]:
-            sys.stdout.write("paused: %s\n" % report["paused"])
-        for err in report["errors"]:
-            sys.stdout.write("  fail: %s\n" % err)
+        _print_run_report(report)
     return code
+
+
+def cmd_trace(args):
+    trace, errors, warnings = trace_mod.build_trace(args.path)
+    if errors:
+        for err in errors:
+            sys.stdout.write("  fail: %s: %s\n" % (err.get("path", "?"), err["message"]))
+        return EXIT_VALIDATION
+    if args.id not in trace:
+        return _fail("unknown id %r in trace index" % args.id)
+    links = trace[args.id]
+    incoming = []
+    for src in sorted(trace):
+        for rel in sorted(trace[src]):
+            if args.id in trace[src][rel]:
+                incoming.append({"from": src, "relation": rel})
+    if args.json:
+        json.dump({"ok": True, "id": args.id, "links": links,
+                   "referencedBy": incoming, "warnings": warnings},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write("%s:\n" % args.id)
+        for rel in sorted(links):
+            sys.stdout.write("  %s: %s\n" % (rel, ", ".join(links[rel]) or "-"))
+        sys.stdout.write("  referenced by:\n")
+        if incoming:
+            for ref in incoming:
+                sys.stdout.write("    %s (%s)\n" % (ref["from"], ref["relation"]))
+        else:
+            sys.stdout.write("    -\n")
+    return EXIT_OK
+
+
+def cmd_budget(args):
+    try:
+        data = manifest_mod.load(args.path)
+    except (FileNotFoundError, ValueError) as exc:
+        return _fail("no manifest: %s (run shiploom init)" % exc)
+    if args.set:
+        try:
+            overrides = run_mod.parse_budget_flags(args.set)
+        except ValueError as exc:
+            return _fail(str(exc))
+        for key in overrides:
+            if key not in ("tokens", "spendUSD", "wallClockH"):
+                return _fail("unknown budget key %r" % key)
+        budgets = data.setdefault("budgets", manifest_mod.default_budgets())
+        for key, value in overrides.items():
+            budgets.setdefault(key, {"limit": value, "used": 0})
+            budgets[key]["limit"] = value
+        manifest_mod.save(args.path, data)
+        auditlog.append(args.path, actor=args.actor, action="budget.set",
+                        target=",".join(sorted(overrides)))
+    budgets = data.get("budgets", {})
+    if args.json:
+        json.dump({"ok": True, "budgets": budgets},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        if not budgets:
+            sys.stdout.write("no budgets tracked\n")
+        for key in sorted(budgets):
+            slot = budgets[key]
+            sys.stdout.write("%s: %s/%s\n" % (key, slot.get("used"), slot.get("limit")))
+    return EXIT_OK
+
+
+def cmd_resume(args):
+    try:
+        data = manifest_mod.load(".")
+    except (FileNotFoundError, ValueError) as exc:
+        return _fail("no manifest: %s (run shiploom init)" % exc)
+    workflow = data.get("workflow")
+    if not workflow:
+        return _fail("no workflow bound (run shiploom init or shiploom run <workflow>)")
+    try:
+        budgets = run_mod.parse_budget_flags(args.budget)
+    except ValueError as exc:
+        return _fail(str(exc))
+    wf_path = run_mod.find_workflow(workflow, ".")
+    order, pending_gates = [], []
+    if wf_path is not None:
+        fm, _ = run_mod.load_workflow(wf_path)
+        if fm is not None:
+            order = [s.get("id") for s in fm.get("steps", []) if isinstance(s, dict)]
+    try:
+        pending_gates = approvals_mod.pending_approvals(".")
+    except ValueError as exc:
+        return _fail(str(exc))
+    states = data.get("steps", {})
+    done = sum(1 for sid in order if states.get(sid, {}).get("state") == "done")
+    position = {"workflow": workflow, "done": done, "total": len(order),
+                "next": next((sid for sid in order
+                              if states.get(sid, {}).get("state") != "done"), None),
+                "pendingGates": [e["gate"] for e in pending_gates]}
+    code, report = run_mod.run_workflow(".", workflow, budget_overrides=budgets,
+                                        actor=args.actor)
+    if args.json:
+        json.dump({"ok": code == EXIT_OK, "exit": code, "position": position, **report},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write("resume %s: %d/%d done, next: %s\n" % (
+            workflow, done, len(order), position["next"] or "complete"))
+        if position["pendingGates"]:
+            sys.stdout.write("pending gates: %s\n" % ", ".join(position["pendingGates"]))
+        _print_run_report(report)
+    return code
+
+
+def cmd_approvals(args):
+    if args.interval <= 0:
+        return _fail("--interval must be positive")
+    try:
+        entries = approvals_mod.pending_approvals(".")
+    except ValueError as exc:
+        return _fail(str(exc))
+    if args.json:
+        json.dump({"ok": True, "pending": entries},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+        return EXIT_OK
+    def _show(entries):
+        if not entries:
+            sys.stdout.write("no pending approvals\n")
+            return
+        for entry in entries:
+            sys.stdout.write("%-12s %-14s %-8s attempts=%d %s\n" % (
+                entry["gate"], entry["kind"], entry["state"],
+                entry["attempts"], entry["message"] or "awaiting human decision"))
+        sys.stdout.write("note: full rationale cards need manifest rationale"
+                         " (schema follow-up)\n")
+    _show(entries)
+    if args.watch and entries:
+        import time
+        try:
+            while True:
+                time.sleep(args.interval)
+                try:
+                    entries = approvals_mod.pending_approvals(".")
+                except ValueError as exc:
+                    return _fail(str(exc))
+                _show(entries)
+                if not entries:
+                    return EXIT_OK
+        except KeyboardInterrupt:
+            return EXIT_OK
+    return EXIT_OK
+
+
+def cmd_add(args):
+    try:
+        dest, warnings = add_mod.install(args.kind, args.name, args.source, ".",
+                                         tag=args.tag, force=args.force)
+    except ValueError as exc:
+        return _fail(str(exc))
+    auditlog.append(".", actor=args.actor, action="content.add",
+                    target="%s:%s" % (args.kind, args.name))
+    if args.json:
+        json.dump({"ok": True, "kind": args.kind, "name": args.name,
+                   "dest": dest, "warnings": warnings},
+                  sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write("installed %s %s -> %s\n" % (args.kind, args.name, dest))
+        for warn in warnings:
+            sys.stdout.write("  warn: %s\n" % warn)
+    return EXIT_OK
 
 
 def cmd_verify(args):
@@ -427,6 +603,48 @@ def build_parser():
                           help="harness name or 'all' (base|claude|opencode)")
     adapters.add_argument("--json", action="store_true")
     adapters.set_defaults(func=cmd_adapters)
+
+    trace = sub.add_parser("trace", help="show trace subgraph for an artifact id")
+    trace.add_argument("id", help="artifact id, e.g. REQ-001")
+    trace.add_argument("path", nargs="?", default=".")
+    trace.add_argument("--json", action="store_true")
+    trace.set_defaults(func=cmd_trace)
+
+    budget = sub.add_parser("budget", help="show or set manifest budget limits")
+    budget.add_argument("--set", action="append", default=[],
+                        help="repeatable KEY=VALUE (tokens|spendUSD|wallClockH)")
+    budget.add_argument("--actor", default="human")
+    budget.add_argument("--json", action="store_true")
+    budget.add_argument("path", nargs="?", default=".")
+    budget.set_defaults(func=cmd_budget)
+
+    resume = sub.add_parser("resume", help="report position and advance the bound workflow")
+    resume.add_argument("--budget", action="append", default=[],
+                        help="repeatable KEY=VALUE (tokens|spendUSD|wallClockH)")
+    resume.add_argument("--actor", default="human")
+    resume.add_argument("--json", action="store_true")
+    resume.set_defaults(func=cmd_resume)
+
+    approvals = sub.add_parser("approvals", help="list pending human gates")
+    approvals.add_argument("--watch", action="store_true",
+                           help="poll until no gates remain (Ctrl-C stops)")
+    approvals.add_argument("--interval", type=float, default=5.0,
+                           help="poll seconds for --watch (default 5)")
+    approvals.add_argument("--json", action="store_true",
+                           help="single snapshot (implies no watch)")
+    approvals.set_defaults(func=cmd_approvals)
+
+    add = sub.add_parser("add", help="install a content pack into the project overlay")
+    add.add_argument("kind", choices=sorted(add_mod.KINDS),
+                     help="skill|workflow|hook|policy|adapter")
+    add.add_argument("name", help="destination name (skills: must match SKILL.md name)")
+    add.add_argument("--from", dest="source", required=True,
+                     help="local path or git URL (URLs require --tag)")
+    add.add_argument("--tag", default=None, help="semver tag for git sources")
+    add.add_argument("--force", action="store_true", help="overwrite existing dest")
+    add.add_argument("--actor", default="human")
+    add.add_argument("--json", action="store_true")
+    add.set_defaults(func=cmd_add)
 
     return parser
 

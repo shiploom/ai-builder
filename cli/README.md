@@ -13,6 +13,12 @@ Post-MVP (PR10 closed): `add upgrade trace budget resume approvals`
 + team/enterprise packs + `settings.json`/`opencode.json` mapping + Fumadocs site.
 Added (PR9): `adapters --list | --generate <harness|all>` (base/claude/
 opencode; idempotent, `DO NOT EDIT` headers).
+Added (PR11): `trace <id> [path] [--json]` (trace subgraph + referenced-by),
+`budget [--set K=V] [--json]` (manifest limits; token/spend operator-reported),
+`resume [--budget K=V] [--json]` (position report + advance), `approvals
+[--watch] [--interval S] [--json]` (pending gates; rationale cards need a
+manifest schema follow-up), `add <kind> <name> --from PATH-OR-URL [--tag]
+[--force]` (overlay install, strict-validated, unsigned provenance).
 
 - `manifest.py` — orchestrator-owned manifest (atomic saves, kill-safe).
 - `auditlog.py` — append-only hash-chained audit log + verify/export.
