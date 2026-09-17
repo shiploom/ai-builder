@@ -45,6 +45,9 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   scaffold). All 20 commands wired. Parity 77/77.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
+  Shipped first: AC demo under Go (`SHIPLOOM_GO_BIN` mode in
+  `scripts/ac-demo.sh`, 54/54). Measured: 5.6MB binary (<10MB),
+  ~5ms cold start (<50ms).
 - P6: transition — dual-ship with version-parity check, Python fallback
   deprecated one minor after Go parity, then removed.
 

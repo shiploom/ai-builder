@@ -15,6 +15,15 @@
 #
 # File drops stand in for harness LLM output; every gate, lock, approval,
 # and ordering constraint enforced here is the real production machinery.
+#
+# Go mode: SHIPLOOM_GO_BIN=/path/to/shiploom-go runs every CLI step through
+# the Go binary (SHIPLOOM_SCHEMAS is pinned to the repo schemas); $PY stays
+# python3 for harness scripting (heredoc JSON edits, fixture setup). The
+# trace-offline step runs `trace REQ-001` in Go mode (the Go CLI has no
+# --strict tree-builder flag by design; strict trace is covered by parity
+# fixtures instead). Auto-detected test gates use the operator PATH, so run
+# Go mode with the dev interpreter first (e.g. PATH="$REPO/.venv/bin:$PATH")
+# to match the Python leg's `sys.executable -m pytest`.
 set -u
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,7 +44,8 @@ PASS=0; FAIL=0; SKIPP=0
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/shiploom-ac.XXXXXX")"
 trap 'rm -rf "$WORK"; kill %1 2>/dev/null; true' EXIT INT TERM
 
-ship() { "$PY" "$REPO/cli/shiploom.py" "$@"; }
+ship() { if [ -n "${SHIPLOOM_GO_BIN:-}" ]; then SHIPLOOM_SCHEMAS="$REPO/schemas" "$SHIPLOOM_GO_BIN" "$@"; else "$PY" "$REPO/cli/shiploom.py" "$@"; fi; }
+trace_offline() { if [ -n "${SHIPLOOM_GO_BIN:-}" ]; then ship trace REQ-001; else "$PY" "$REPO/validators/trace.py" --strict .; fi; }
 step() { printf '\n### %s\n' "$1"; }
 ok() { PASS=$((PASS + 1)); printf '  PASS %s\n' "$1"; }
 bad() { FAIL=$((FAIL + 1)); printf '  FAIL %s\n' "$1"; }
@@ -89,7 +99,7 @@ drop_lite_files() { # drop_lite_files <project> (harness-simulated artifacts)
 step "AC5 offline commands on the repo itself"
 cd "$REPO"
 expect 0 "validate --strict offline" -- ship validate --strict .
-expect 0 "trace builds offline" -- "$PY" "$REPO/validators/trace.py" --strict .
+expect 0 "trace builds offline" -- trace_offline
 expect 0 "doctor offline" -- ship doctor
 
 step "AC1 greenfield python: init + adapters (2 harnesses)"
