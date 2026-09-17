@@ -24,9 +24,13 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   `internal/status`, `internal/approvals` + `run`/`status`/`approvals` CLI
   wiring. Parity 32/32 (CPython 3.9 + 3.13 legs).
 - P4 (in progress): full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
-  byte-identical (`ac-demo.sh` parses them). Shipped first slice: `lock`
+  byte-identical (`ac-demo.sh` parses them). Shipped slices: `lock`
   (`--check`/`--actor`/`--json`, vault 0700) + `verify`
-  (`--report`/`--gates`/`--json`, deterministic quality table). Parity 41/41.
+  (`--report`/`--gates`/`--json`, deterministic quality table) +
+  `trace` (`--json`, sorted relations/incoming) + `approve`
+  (`--deny`/`--reason`/`--actor`/`--json`) + `budget`
+  (`--set`/`--actor`/`--json`/`[path]`) + `resume`
+  (`--budget`/`--actor`/`--json`, position + stepper). Parity 49/49.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -121,3 +125,24 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
 - Parity avoids timing nondeterminism: `verify` fixtures assert human
   output only (never `--json`, whose `durationS` varies); `lock` JSON is
   duration-free and safe.
+
+## Port notes (P4) — trace/approve/budget/resume fidelity contract
+
+- `trace`: reuses P3 `internal/trace` (`BuildTrace` with `strict=false`).
+  Error lines (`  fail: path: msg` to stdout) and unknown-id
+  (`unknown id %r`, exit 2) match; human relations and incoming refs are
+  alphabetically sorted; JSON (`ok/id/links/referencedBy/warnings`) matches.
+- `approve`: reuses `run.LoadManifest` for the exact `no manifest: ...`
+  shape, `workflow.FindWorkflow`/`LoadWorkflow` for resolution, and
+  `manifest.Utcnow`/`auditlog.Append` for writes. Gate lookup, approvable
+  check (`human-approval|policy`), deny-requires-reason, and human/JSON
+  outputs match. `--actor`/`--reason` accept space and `=` forms. JSON
+  carries a live `at` timestamp so parity fixtures use human output only.
+- `budget`: `[path]` positional defaults to `.`; `--set` validates keys
+  (`tokens|spendUSD|wallClockH`, `%r` on unknown) and mirrors setdefault
+  semantics (new slots get `used: 0`, existing slots keep theirs);
+  numbers print via `PyStr` so `0`/`25.0` literals survive. Audit
+  `budget.set` targets the sorted key list.
+- `resume`: bound-workflow guard, budget parsing, workflow order, pending
+  gates, and position (`done/total/next/pendingGates`, `next: complete`
+  when done) match; then the stepper report reuses run's human lines.
