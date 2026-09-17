@@ -1,6 +1,6 @@
 # Post-MVP Plan (PR11–PR14 + backlog)
 
-**Date:** 2026-09-17 · **Status:** PR11–PR18 complete; PR19 (Pages hosting) in progress
+**Date:** 2026-09-17 · **Status:** PR11–PR19 complete; PR20 in progress (skills completion)
 (Hosting still open — `npm run build` produces a static `out/` directory.)
 **Decisions locked:** CLI completeness leads; stay on Python+uv (Go revisit only
 at 10k-user scale per spec §2.4); no third harness; no enterprise pilot waiting

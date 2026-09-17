@@ -13,12 +13,12 @@ Single source of truth for adapters. Base-spec compatible; harness extras only u
   backup + rollback.
 
 - `artifacts-templates/` — normative Markdown templates with frontmatter (§11.6). (PR3)
-- `skills/` — 10 base-spec `SKILL.md` packs, catalog complete (shipped list below).
+- `skills/` — 16 base-spec packs, catalog complete per spec §13
+  (PR5 product trio; PR6 research + acceptance; PR8 build + verify;
+  brownfield-map + impact-analysis; PR20: deployment-plan,
+  post-deploy-validate, docs-generate, security-review, debug-triage,
+  change-plan).
 - `workflows/` — declarative `greenfield-full-lite`, `brownfield-fix`. (PR7)
 - `hooks/` — `registry.json` default-deny entries (shipped; harness event mapping post-MVP).
 - `policies/` — `default.json` pack (shipped; team/enterprise packs post-MVP).
 - `roles/` — specifier / implementer / verifier packs. (PR5)
-- `skills/` — shipped: idea-shaping, product-definition,
-  architecture-design (PR5); market-research, competitor-teardown,
-  spec-to-acceptance (PR6); implement-scoped-diff, verify-independent
-  (PR8); brownfield-map, impact-analysis (PR10). Catalog complete.

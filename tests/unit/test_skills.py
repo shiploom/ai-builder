@@ -9,7 +9,9 @@ CORE = Path(__file__).resolve().parents[2] / "core"
 EXPECTED_SKILLS = ["idea-shaping", "product-definition", "architecture-design",
                    "market-research", "competitor-teardown", "spec-to-acceptance",
                    "implement-scoped-diff", "verify-independent",
-                   "brownfield-map", "impact-analysis"]
+                   "brownfield-map", "impact-analysis",
+                   "deployment-plan", "post-deploy-validate", "docs-generate",
+                   "security-review", "debug-triage", "change-plan"]
 SKILL_SECTIONS = ["## Purpose", "## Inputs", "## Outputs", "## Prerequisites",
                   "## Methodology", "## Constraints", "## Tools",
                   "## Verification", "## Examples"]

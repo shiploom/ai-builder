@@ -3,6 +3,12 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## PR20 — Skill catalog completion (unreleased)
+
+- Six remaining spec §13 packs: `deployment-plan`, `post-deploy-validate`,
+  `docs-generate`, `security-review`, `debug-triage`, `change-plan` —
+  base-spec pure, contract-tested. Catalog now 16/16.
+
 ## PR19 — GitHub Pages hosting (unreleased)
 
 - `PAGES_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`-aware Next config + fumadocs
