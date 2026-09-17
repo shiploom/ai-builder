@@ -1,0 +1,1 @@
+run greenfield-full-lite --from scope-approval --json

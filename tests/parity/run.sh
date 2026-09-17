@@ -41,10 +41,29 @@ run_one() {
     fi
     work="$case_tmp"
   fi
-  (cd "$work" && "$PYBIN" "$REPO/cli/shiploom.py" "$@" >"$TMP/py.out" 2>"$TMP/py.err"; echo "$?" >"$TMP/py.exit")
-  # SHIPLOOM_SCHEMAS pins the Go binary to the repo schemas (its CWD/exe
-  # probing cannot see them from scratch dirs or /tmp installs).
-  (cd "$work" && SHIPLOOM_SCHEMAS="$REPO/schemas" "$GO_BIN" "$@" >"$TMP/go.out" 2>"$TMP/go.err"; echo "$?" >"$TMP/go.exit")
+  if [ -f "$dir/stateful" ]; then
+    # Stateful commands (run/status mutate .shiploom/): replay the SAME
+    # argv in a pristine copy of seed/ per runtime so neither run observes
+    # the other's writes. setup.sh must create $work/seed.
+    if [ ! -d "$work/seed" ]; then
+      echo "FAIL $name: stateful case without seed/"
+      rm -rf "$case_tmp"
+      FAIL=$((FAIL + 1))
+      return
+    fi
+    rm -rf "$work/py" "$work/go"
+    cp -R "$work/seed" "$work/py"; cp -R "$work/seed" "$work/go"
+    (cd "$work/py" && "$PYBIN" "$REPO/cli/shiploom.py" "$@" >"$TMP/py.out" 2>"$TMP/py.err"; echo "$?" >"$TMP/py.exit")
+    (cd "$work/go" && SHIPLOOM_SCHEMAS="$REPO/schemas" "$GO_BIN" "$@" >"$TMP/go.out" 2>"$TMP/go.err"; echo "$?" >"$TMP/go.exit")
+    for f in "$TMP/py.out" "$TMP/py.err" "$TMP/go.out" "$TMP/go.err"; do
+      sed -e "s|$work/py|PROJ|g" -e "s|$work/go|PROJ|g" "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+    done
+  else
+    (cd "$work" && "$PYBIN" "$REPO/cli/shiploom.py" "$@" >"$TMP/py.out" 2>"$TMP/py.err"; echo "$?" >"$TMP/py.exit")
+    # SHIPLOOM_SCHEMAS pins the Go binary to the repo schemas (its CWD/exe
+    # probing cannot see them from scratch dirs or /tmp installs).
+    (cd "$work" && SHIPLOOM_SCHEMAS="$REPO/schemas" "$GO_BIN" "$@" >"$TMP/go.out" 2>"$TMP/go.err"; echo "$?" >"$TMP/go.exit")
+  fi
   norm "$TMP/py.out" >"$TMP/py.norm"; norm "$TMP/go.out" >"$TMP/go.norm"
   norm "$TMP/py.err" >"$TMP/pye.norm"; norm "$TMP/go.err" >"$TMP/goe.norm"
   if [ -n "$case_tmp" ]; then

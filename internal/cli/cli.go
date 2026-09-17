@@ -74,6 +74,7 @@ func Main(argv []string) int {
 		fmt.Fprintln(os.Stderr, "shiploom: error: a command is required (try --help)")
 		return ExitValidation
 	}
+	BootstrapToolRoot()
 	if argv[0] == "--version" {
 		fmt.Printf("shiploom %s (core %s, go %s)\n",
 			version.CoreVersion, version.CoreVersion, runtime.Version())

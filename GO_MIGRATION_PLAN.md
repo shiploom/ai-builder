@@ -16,11 +16,13 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
 - P1 (shipped): toolchain bootstrap + `go.mod` (`github.com/shiploom/ai-builder`)
   + `cmd/shiploom/` + `internal/` layout + parity-harness design + `--version`
   parity proof.
-- P2: leaf libs in dependency order (manifest → mcp → auditlog → policy →
-  approvals → add → adapters → conformance → doctor → oracle → status →
-  trace → characterize), each with ported unit tests + golden parity.
-- P3: orchestrator + gates (`run`, `gates`, `verify_step_check`) — highest
-  risk; replay recorded `run` transcripts, not just unit tests.
+- P2 (shipped): leaf libs in dependency order (manifest → mcp → auditlog →
+  policy → oracle → characterize → difflib → gates-verify + `validate`
+  wiring), jsoncanon/pyRepr/fnmatch foundations, 7/7 parity.
+- P3 (in progress): orchestrator + read surfaces — `internal/workflow`
+  (find/load/resolve_uses/glob), `internal/run` stepper, `internal/trace`,
+  `internal/status`, `internal/approvals` + `run`/`status`/`approvals` CLI
+  wiring. Parity 31/31 (CPython 3.9 + 3.13 legs).
 - P4: full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
   byte-identical (`ac-demo.sh` parses them).
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
@@ -68,3 +70,31 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   clean); unhashable workflow ids/links (Python crashes, Go skips);
   malformed packs (Python may crash, Go non-matches); dict-in-enum key
   order. No committed fixture exercises any of these.
+
+## Port notes (P3) — orchestrator fidelity contract
+
+- `find_workflow` overlay semantics kept: `<project>/.shiploom/workflows/`
+  shadows tool core; `name.md` suffix and legacy `workflows/` prefix
+  accepted. Tool root derives from the schemas dir (SHIPLOOM_SCHEMAS or
+  CWD/exe probing); `SHIPLOOM_CORE_DIR` defaults to it when unset so the
+  default policy pack and hooks resolve from scratch dirs.
+- `resolve_uses`: overlay path then tool core; skill dirs resolve to
+  `SKILL.md`; always a path (hint prints its basename).
+- `_glob_hits` follows pathlib: literal-exists fast path (absolute
+  patterns stay absolute), single `*` never crosses `/`, `**` recurses,
+  dangling links filtered, hits sorted as strings.
+- `load_workflow`: parse-error first, then the no-frontmatter message;
+  `.md`-only (no JSON branch, no extra steps-shape check — schema owns it).
+- Stepper: binding adoption/guard, wallClockH adoption + overrides,
+  `--from` reset (steps + retries only, gates kept), `--only`
+  predecessor guard, human/policy/verification gates, retry counting with
+  `onFail: abort|replan`, checkpoints with post-save sha256, audit appends
+  (`run.start/step.done/complete/paused/retry/replan/reopened/policy.deny`).
+  Exit 3 only from policy deny; exit 4 only from wall-clock breach.
+- New deliberate divergences: audit/save failures crash CPython but return
+  exit 2 with a report error in Go; only the missing-manifest
+  FileNotFoundError text is synthesized (`[Errno 2] ...`), other OSError
+  texts differ; `status.invalid` order follows directory walk order
+  (fixtures keep at most one invalid file); argparse-only error paths
+  (`--help` text, usage wrapping, `prog:`-prefixed errors) are not yet
+  byte-identical — all covered flag behaviors are.

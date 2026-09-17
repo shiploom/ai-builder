@@ -28,6 +28,16 @@ type Entry struct {
 	Rule    string `json:"rule,omitempty"`
 }
 
+// EntryMap renders an Entry exactly like the Python validators do:
+// {"path","message"} plus "rule" only when set.
+func EntryMap(e Entry) map[string]any {
+	m := map[string]any{"path": e.Path, "message": e.Message}
+	if e.Rule != "" {
+		m["rule"] = e.Rule
+	}
+	return m
+}
+
 // ----------------------------------------------------------------------------
 // Minimal JSON Schema (draft 2020-12) subset evaluator
 // ----------------------------------------------------------------------------
@@ -253,7 +263,28 @@ func isBoolNum(v any) bool {
 	return ok
 }
 
-// pyRepr mirrors CPython repr() for JSON-shaped values.
+// PyStr mirrors Python "%s" / str() for JSON-shaped values.
+func PyStr(v any) string {
+	switch t := v.(type) {
+	case nil:
+		return "None"
+	case string:
+		return t
+	case bool:
+		if t {
+			return "True"
+		}
+		return "False"
+	default:
+		return pyRepr(v)
+	}
+}
+
+// PyRepr is the exported shared CPython-repr helper.
+func PyRepr(v any) string {
+	return pyRepr(v)
+}
+
 func pyRepr(v any) string {
 	switch t := v.(type) {
 	case nil:
@@ -432,6 +463,12 @@ func readFileUTF8(path string) (string, error) {
 // and rejects trailing data like Python json.loads.
 func decodeJSON(data string) (any, error) {
 	return jsoncanon.Decode([]byte(data))
+}
+
+// DecodeJSON is the exported shared JSON decoder (number literals
+// preserved, trailing data rejected).
+func DecodeJSON(data []byte) (any, error) {
+	return jsoncanon.Decode(data)
 }
 
 // ValidateAgainstSchema validates data against a schema subset.

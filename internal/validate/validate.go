@@ -216,7 +216,12 @@ func isExcluded(path, root string) bool {
 	return false
 }
 
-func collectFiles(root string) []string {
+// IsExcluded is the exported exclusion check for sibling packages.
+func IsExcluded(path, root string) bool {
+	return isExcluded(path, root)
+}
+
+func CollectFiles(root string) []string {
 	info, err := os.Stat(root)
 	if err == nil && !info.IsDir() {
 		return []string{root}
@@ -582,7 +587,7 @@ func ValidatePath(schemas *Schemas, target string, strict bool) ([]Entry, []Entr
 	if info, err := os.Stat(target); err == nil && !info.IsDir() {
 		base = filepath.Dir(target)
 	}
-	files := collectFiles(root)
+	files := CollectFiles(root)
 	for _, path := range files {
 		if isExcluded(path, base) {
 			continue
