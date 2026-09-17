@@ -1,0 +1,1 @@
+verify --gates secrets,license --report

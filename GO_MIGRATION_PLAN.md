@@ -19,12 +19,14 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
 - P2 (shipped): leaf libs in dependency order (manifest → mcp → auditlog →
   policy → oracle → characterize → difflib → gates-verify + `validate`
   wiring), jsoncanon/pyRepr/fnmatch foundations, 7/7 parity.
-- P3 (in progress): orchestrator + read surfaces — `internal/workflow`
+- P3 (shipped): orchestrator + read surfaces — `internal/workflow`
   (find/load/resolve_uses/glob), `internal/run` stepper, `internal/trace`,
   `internal/status`, `internal/approvals` + `run`/`status`/`approvals` CLI
-  wiring. Parity 31/31 (CPython 3.9 + 3.13 legs).
-- P4: full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
-  byte-identical (`ac-demo.sh` parses them).
+  wiring. Parity 32/32 (CPython 3.9 + 3.13 legs).
+- P4 (in progress): full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
+  byte-identical (`ac-demo.sh` parses them). Shipped first slice: `lock`
+  (`--check`/`--actor`/`--json`, vault 0700) + `verify`
+  (`--report`/`--gates`/`--json`, deterministic quality table). Parity 41/41.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -98,3 +100,24 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   (fixtures keep at most one invalid file); argparse-only error paths
   (`--help` text, usage wrapping, `prog:`-prefixed errors) are not yet
   byte-identical — all covered flag behaviors are.
+
+## Port notes (P4) — lock/verify fidelity contract
+
+- `lock`: reuses the P2 `internal/oracle` library (discovery, vault 0700,
+  git-leak check, hash compare). Human lines (`locked N criteria...`,
+  `acceptance lock: ok/BROKEN`, `lock failed:`, `fail:`/`warn:`) and JSON
+  (`ok/errors/warnings/summary`) match; empty-failure summary stays `{}`.
+  `--actor` accepts space and `=` forms.
+- `verify`: reuses `internal/gates` (fixed `GateOrder`, quality insertion
+  order `compile/secrets/tests/license/mutation/determinism`). Human lines
+  (`verify: verdict`, `[STAT] gate detail`, `quality key value`,
+  `fail:`, `wrote verification/gate-report.json`) match; `--gates`
+  accepts space/`=` forms, empty selection means full run, unknown names
+  fail like Python. `--report` writes `verification/gate-report.json`
+  with canonical JSON + trailing newline.
+- Fixed `gates.toReportMap` to emit jsoncanon-compatible types only
+  (`quality`/`warnings` as `map[string]any`, `errors` as `[]any`); the
+  writer supports no other map/slice shapes.
+- Parity avoids timing nondeterminism: `verify` fixtures assert human
+  output only (never `--json`, whose `durationS` varies); `lock` JSON is
+  duration-free and safe.

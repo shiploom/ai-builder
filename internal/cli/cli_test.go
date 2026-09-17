@@ -17,7 +17,7 @@ func TestTableCoversAllCommands(t *testing.T) {
 		if Table[i].Help == "" {
 			t.Fatalf("command %q has empty help", name)
 		}
-		wantWired := name == "validate" || name == "run" || name == "status" || name == "approvals"
+		wantWired := name == "validate" || name == "run" || name == "status" || name == "approvals" || name == "lock" || name == "verify"
 		if (Table[i].Run != nil) != wantWired {
 			t.Fatalf("command %q wired=%v, want %v", name, Table[i].Run != nil, wantWired)
 		}

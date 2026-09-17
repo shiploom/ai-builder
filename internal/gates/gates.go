@@ -445,10 +445,24 @@ func toReportMap(r Report) map[string]any {
 	for k, v := range r.Warnings {
 		warnings[k] = v
 	}
-	return map[string]any{
-		"ok": r.Ok, "gates": gates, "quality": r.Quality,
-		"warnings": warnings, "verdict": r.Verdict, "errors": r.Errors,
+	quality := map[string]any{}
+	for k, v := range r.Quality {
+		quality[k] = v
 	}
+	errs := make([]any, 0, len(r.Errors))
+	for _, e := range r.Errors {
+		errs = append(errs, e)
+	}
+	return map[string]any{
+		"ok": r.Ok, "gates": gates, "quality": quality,
+		"warnings": warnings, "verdict": r.Verdict, "errors": errs,
+	}
+}
+
+// ToMap renders the report exactly like run_gates() JSON (sorted keys
+// handled by the writer). Public for the verify CLI.
+func (r Report) ToMap() map[string]any {
+	return toReportMap(r)
 }
 
 // RunGates mirrors run_gates(). selected=nil runs the fixed order;
