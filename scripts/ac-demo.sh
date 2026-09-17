@@ -97,8 +97,8 @@ P="$WORK/ac1py"; mkdir -p "$P"; cp -r "$REPO/examples/stack-python/"* "$P/"
 cd "$P" && expect 0 "init green" -- ship init --green --harness auto
 expect 0 "adapters generate all" -- ship adapters --generate all
 [ -f "$P/AGENTS.md" ] && [ -f "$P/CLAUDE.md" ] && ok "AGENTS.md + CLAUDE.md" || bad "harness facts files"
-[ "$(find "$P/.claude/skills" "$P/.opencode/skills" -name SKILL.md | wc -l | tr -d ' ')" = "20" ] \
-  && ok "10 skills x 2 harnesses" || bad "skill count"
+[ "$(find "$P/.claude/skills" "$P/.opencode/skills" -name SKILL.md | wc -l | tr -d ' ')" = "$(( $(ls "$REPO/core/skills" | wc -l | tr -d ' ') * 2 ))" ] \
+  && ok "$(ls "$REPO/core/skills" | wc -l | tr -d ' ') skills x 2 harnesses" || bad "skill count"
 [ -f "$P/.claude/settings.json" ] && [ -f "$P/opencode.json" ] \
   && [ -x "$P/.claude/hooks/shiploom-guard.py" ] \
   && ok "settings.json + opencode.json + guard hook" || bad "harness config files"

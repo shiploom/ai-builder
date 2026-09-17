@@ -5,8 +5,10 @@ Gates are code, never LLM judgment. Each gate returns
 {status: pass|fail|skip, command?, exit?, durationS, detail, tail?}.
 
 Gate set (PR13):
-  build/typecheck/lint/sast/contract — project-configured commands only
-    (unconfigured → skip). No auto-run of unknown commands.
+  build/typecheck/lint/sast/dast/contract — project-configured commands only
+    (unconfigured → skip). No auto-run of unknown commands. DAST needs a
+    running target, which the runner cannot assume — hence configured-only,
+    same as SAST.
   test — configured command, else auto-detected `pytest -q` when
     tests/ exists (npm/go runners: configured only, never auto).
   secrets — built-in stdlib secret scanner (always runs).
@@ -340,7 +342,7 @@ def run_gates(project_dir, selected=None):
     """Run gates in fixed order. Returns gate report dict (verdict included)."""
     root = Path(project_dir)
     configured = _configured(root)
-    order = ["build", "typecheck", "lint", "sast", "test", "contract",
+    order = ["build", "typecheck", "lint", "sast", "dast", "test", "contract",
              "secrets", "depAudit", "license", "mutation", "compile"]
     if selected:
         unknown = [g for g in selected if g not in order]
@@ -353,7 +355,7 @@ def run_gates(project_dir, selected=None):
     test_cmd, test_timeout = None, DEFAULT_TIMEOUT_S
 
     for gate_id in order:
-        if gate_id in ("build", "typecheck", "lint", "sast", "test", "contract"):
+        if gate_id in ("build", "typecheck", "lint", "sast", "dast", "test", "contract"):
             command, reason = _gate_command(gate_id, configured, root)
             entry = configured.get(gate_id) or {}
             timeout_s = entry.get("timeoutS", DEFAULT_TIMEOUT_S) if isinstance(entry, dict) else DEFAULT_TIMEOUT_S

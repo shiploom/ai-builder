@@ -28,7 +28,7 @@ Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--js
 - `oracle.py` — acceptance discovery, vault checks, lock/check-lock.
 - `run.py` — deterministic stepper: order, consumes/produces, gates,
   retries/replan, resume, wall-clock budgets, checkpoints.
-- `gates.py` — gate runner: configured build/typecheck/lint/sast/test/contract,
+- `gates.py` — gate runner: configured build/typecheck/lint/sast/dast/test/contract,
   auto-detected pytest, built-in secrets scan + dep inventory (osv-scanner when
   present, else report-only) + lockfile license inventory (report-only) + AST
   mutation sampler (report-only) + compileall, 2× determinism check,

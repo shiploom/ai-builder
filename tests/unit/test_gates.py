@@ -212,6 +212,15 @@ def test_sast_configured_and_skipped(proj):
     assert "sast" not in report["gates"]
 
 
+def test_dast_configured_and_skipped(proj):
+    set_gate(proj, "dast", "%s -c \"import sys; sys.exit(0)\"" % PY)
+    assert gates_mod.run_gates(proj, selected=["dast"])["gates"]["dast"]["status"] == "pass"
+    set_gate(proj, "dast", "%s -c \"import sys; sys.exit(1)\"" % PY)
+    assert gates_mod.run_gates(proj, selected=["dast"])["gates"]["dast"]["status"] == "fail"
+    report = gates_mod.run_gates(proj, selected=["license"])
+    assert "dast" not in report["gates"]
+
+
 def test_license_inventory_declared_and_unknown(proj):
     write(proj / "package-lock.json", json.dumps({
         "name": "x",

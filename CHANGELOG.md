@@ -9,6 +9,14 @@ All notable changes, newest first. Version is `core/VERSION`
   `docs-generate`, `security-review`, `debug-triage`, `change-plan` —
   base-spec pure, contract-tested. Catalog now 16/16.
 
+## PR21 — Deploy matrix + DAST gate (unreleased)
+
+- `examples/deploy/{docker,k8s,aws,preview}/` starters (non-root images,
+  probed K8s manifests, default-deny netpol, Terraform stub with spend-gate
+  workflow, preview presets + smoke checklist).
+- `dast` gate: project-configured command, skip-if-absent (a runner cannot
+  assume a live target — same rationale as SAST).
+
 ## PR19 — GitHub Pages hosting (unreleased)
 
 - `PAGES_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`-aware Next config + fumadocs

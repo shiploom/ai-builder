@@ -1,0 +1,16 @@
+# Default-deny egress: pods talk DNS + the app port only. Open
+# explicitly per dependency; the policy mirrors default-deny posture.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - port: 8000
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP

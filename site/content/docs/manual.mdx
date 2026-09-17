@@ -51,3 +51,10 @@ PRs carry trace links (`shiploom trace REQ-xxx`).
 Overlay a policy pack (`shiploom add policy <name> --from ...`), require
 attested MCP servers in `mcp-registry.json`, keep SAST/dep-audit gates green,
 export the audit log (`shiploom audit --export md`) for review.
+
+## Deploy targets
+
+Copy a starter from `examples/deploy/` (`docker/`, `k8s/`, `aws/`,
+`preview/`) and adapt: secrets-via-env, non-root runtimes, human prod
+gate throughout. Write the per-target plan with the `deployment-plan`
+skill; DAST runs as a configured gate against the running target.
