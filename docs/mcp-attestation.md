@@ -1,0 +1,40 @@
+# MCP attestation (design note, PR16 mechanism / post-MVP enforcement)
+
+## Threat model (spec §4.12–4.13)
+
+Tool poisoning, rug-pull (benign→malicious post-approval), malicious
+resources, and `server/discover instructions` + `cacheScope:public`
+cross-user poisoning. Average attack success ~40% undefended; prose
+guardrails barely move it — only protocol isolation + attestation do.
+
+## What ships now (mechanism)
+
+- Registry trust tiers + quarantine (existing): untrusted output never
+  auto-executes nor auto-escalates.
+- `servers[].attestation` (optional, schema-validated): `{method,
+  digest?, signedBy?, verifiedAt?}` with methods `sigstore`,
+  `pinned-digest`, `tofu`.
+- Honest statuses in `cli/mcp.py`: `attested` (claim + evidence),
+  `unverified` (`attested:true` with no evidence — claim without proof),
+  `unattested`, `unknown`. `resolve()` exposes per-provider status;
+  `doctor` warns on unprovenanced servers without failing.
+- Rule: an `attested:true` without an evidence block is reported as
+  **unverified**, never trusted. Absence of evidence is not evidence.
+
+## Methods (bar for each)
+
+- `sigstore`: bundle/signature verifiable offline against the public
+  transparency log (cosign-style). Strongest; needs tooling + network at
+  verify time.
+- `pinned-digest`: exact content hash pinned in the registry. Catches
+  rug-pull (hash change → re-approval) but says nothing about authorship.
+- `tofu`: trust-on-first-use — first-seen hash recorded, changes flagged.
+  Weakest; only acceptable for first-party-adjacent servers with owner sign-off.
+
+## Deferred (needs a pilot + tooling decision)
+
+- Automated verification at `doctor`/`run` time (verify signatures and
+  digests instead of reporting them).
+- Rug-pull re-approval UX (hash change → pause + human re-approval).
+- Transparency-log monitoring and mixed PI+UI synergy tests in conformance.
+- Enterprise pack: attestation-required policy (deny on `unverified`).

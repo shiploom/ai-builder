@@ -37,6 +37,7 @@ def resolve(doc, capability):
     Returns None when unknown. Otherwise:
     {"capability", "providers": [names], "ttlS", "trust",
      "fallback": name|None, "servers": {name: server entry or None},
+     "attestation": {name: attested|unverified|unattested|unknown},
      "quarantine": bool} — quarantine is True unless every involved
     server is attested.
     """
@@ -57,4 +58,42 @@ def resolve(doc, capability):
         involved.append(servers.get(cap["fallback"]) or {})
     chain["quarantine"] = any((entry.get("attested") is not True)
                               for entry in involved)
+    chain["attestation"] = {name: _server_status(servers.get(name))
+                            for name in providers}
     return chain
+
+
+def _server_status(entry):
+    """Classify one registry server entry.
+
+    attested  — attested:true plus an attestation evidence block.
+    unverified — attested:true with no evidence (claim without proof).
+    unattested — attested:false or missing entry data.
+    """
+    if not isinstance(entry, dict):
+        return "unknown"
+    if entry.get("attested") is not True:
+        return "unattested"
+    attestation = entry.get("attestation")
+    if isinstance(attestation, dict) and attestation.get("method"):
+        return "attested"
+    return "unverified"
+
+
+def attestation_status(doc):
+    """Summarize attestation across a registry document.
+
+    Returns {"servers": {name: status}, "unverifiedAttested": [names],
+             "counts": {status: n}}. Never raises on malformed input.
+    """
+    servers = doc.get("servers") or {} if isinstance(doc, dict) else {}
+    if not isinstance(servers, dict):
+        servers = {}
+    per_server = {name: _server_status(entry) for name, entry in servers.items()}
+    counts = {}
+    for status in per_server.values():
+        counts[status] = counts.get(status, 0) + 1
+    return {"servers": per_server,
+            "unverifiedAttested": sorted(n for n, s in per_server.items()
+                                         if s == "unverified"),
+            "counts": counts}

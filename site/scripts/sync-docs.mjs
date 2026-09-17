@@ -25,6 +25,7 @@ const PAGES = [
   ['policy-cookbook.md', 'policy-cookbook.mdx', 'Policy cookbook', 'Default-deny packs, gates, and approvals'],
   ['brownfield-playbook.md', 'brownfield-playbook.mdx', 'Brownfield playbook', 'Map, impact, characterize, change, verify'],
   ['cost-dashboard.md', 'cost-dashboard.mdx', 'Cost / escape dashboard', 'The metrics contract and collector'],
+  ['mcp-attestation.md', 'mcp-attestation.mdx', 'MCP attestation', 'Threat model, evidence tiers, and deferred enforcement'],
 ];
 
 /** Escape bare <word> outside fenced blocks and inline code spans. */

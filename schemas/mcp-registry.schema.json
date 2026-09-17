@@ -37,6 +37,20 @@
             "type": "string",
             "description": "Env/keychain ref only, never a secret. e.g. env:TAVILY_KEY",
             "pattern": "^(env:[A-Z0-9_]+|(keychain|secret):.+)$"
+          },
+          "attestation": {
+            "type": "object",
+            "description": "Optional evidence behind attested:true (PR16). Absent details + attested:true means unverified claim.",
+            "required": ["method"],
+            "properties": {
+              "method": { "type": "string",
+                          "enum": ["sigstore", "pinned-digest", "tofu"] },
+              "digest": { "type": "string", "minLength": 1 },
+              "signedBy": { "type": "string", "minLength": 1 },
+              "verifiedAt": { "type": "string",
+                              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

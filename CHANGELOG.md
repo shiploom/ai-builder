@@ -3,6 +3,16 @@
 All notable changes, newest first. Version is `core/VERSION`
 (`1.0.0-draft` throughout the MVP series).
 
+## PR16 — MCP attestation groundwork (unreleased)
+
+- Optional `servers[].attestation` in the registry schema (`sigstore` /
+  `pinned-digest` / `tofu` + digest/signer/timestamp; backward compatible).
+- Honest statuses: `attested:true` without evidence reports as **unverified**,
+  never trusted. `resolve()` exposes per-provider status; `doctor` warns on
+  unprovenanced servers without failing.
+- `docs/mcp-attestation.md` design note (threat model, method bars, deferred
+  automated verification + rug-pull re-approval).
+
 ## PR15 — Docs site scaffold (unreleased)
 
 - `site/` (Next.js + Fumadocs, static export): landing page + `/docs`

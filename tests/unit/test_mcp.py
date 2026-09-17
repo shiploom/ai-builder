@@ -78,5 +78,58 @@ def test_doctor_reports_capability_count(tmp_path, monkeypatch, capsys):
     assert mcp["status"] == "pass" and "0 capabilities" in mcp["detail"]
 
 
+def test_doctor_warns_on_unprovenanced_servers(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init"]) == 0
+    (tmp_path / ".shiploom" / "mcp-registry.json").write_text(
+        json.dumps(REGISTRY), encoding="utf-8")
+    capsys.readouterr()
+    assert main(["doctor", "--json"]) == 0  # warn, never fail
+    report = json.loads(capsys.readouterr().out)
+    assert report["ok"] is True
+    mcp = next(c for c in report["checks"] if c["name"] == "project-mcp-registry")
+    assert mcp["status"] == "warn"
+    assert "tavily" in mcp["detail"] and "local-lsp" in mcp["detail"]
+
+
+def _attested_registry():
+    doc = json.loads(json.dumps(REGISTRY))
+    doc["servers"]["fetch"]["attestation"] = {
+        "method": "pinned-digest", "digest": "sha256:abc",
+        "verifiedAt": "2026-09-17T00:00:00Z"}
+    return doc
+
+
+def test_attestation_block_validates_and_rejects():
+    from validators.validate import load_schema, validate_against_schema
+    schema = load_schema("mcp-registry")
+    assert validate_against_schema(_attested_registry(), schema, "$") == []
+    bad = _attested_registry()
+    bad["servers"]["fetch"]["attestation"] = {"method": "handshake"}
+    assert validate_against_schema(bad, schema, "$") != []
+    legacy = {"capabilities": {"cap.x": {"providers": ["s"], "ttlS": 1}},
+              "servers": {"s": {"transport": "stdio", "version": "1",
+                                "attested": False, "scopes": [], "auth": "env:X"}}}
+    assert validate_against_schema(legacy, schema, "$") == []  # backward compat
+
+
+def test_resolve_reports_per_provider_attestation():
+    chain = mcp_mod.resolve(_attested_registry(), "cap.web.search")
+    assert chain["attestation"] == {"tavily": "unattested"}
+    assert mcp_mod.resolve(REGISTRY, "cap.repo.symbols")["attestation"] == {
+        "local-lsp": "unverified"}  # claim without evidence
+
+
+def test_attestation_status_summary():
+    summary = mcp_mod.attestation_status(_attested_registry())
+    assert summary["servers"] == {"tavily": "unattested", "fetch": "attested",
+                                  "local-lsp": "unverified"}
+    assert summary["unverifiedAttested"] == ["local-lsp"]
+    assert summary["counts"] == {"unattested": 1, "attested": 1, "unverified": 1}
+    assert mcp_mod.attestation_status({})["counts"] == {}
+    assert mcp_mod.attestation_status(None)["counts"] == {}
+    assert mcp_mod.attestation_status({"servers": "nope"})["counts"] == {}
+
+
 def test_mcp_module_stdlib_only():
     assert_stdlib_only(REPO / "cli" / "mcp.py")

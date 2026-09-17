@@ -37,5 +37,6 @@ Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--js
 - `conformance.py` — deterministic harness checks (generate + profile asserts).
 - `policy.py` — JSON-policy packs + hook matching (deny > require-approval
   > allow; conditional rules win ties). Policy gates deny with exit 3.
-- `mcp.py` — capability → provider-chain resolution + quarantine flags.
+- `mcp.py` — capability → provider-chain resolution + quarantine flags +
+  attestation statuses (attested/unverified/unattested) + registry summary.
 - `shiploom.py` — parser + subcommands. Exit codes: 0/2/3/4/5 per AGENTS.md.

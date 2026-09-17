@@ -137,10 +137,23 @@ def run_checks(project_dir="."):
                 doc = json.loads(registry.read_text(encoding="utf-8"))
                 errs = validate_against_schema(doc, load_schema("mcp-registry"), "$")
                 caps = len(doc.get("capabilities", {})) if not errs else 0
-                checks.append(_check("project-mcp-registry",
-                                     "pass" if not errs else "fail",
-                                     "%d capabilities" % caps if not errs
-                                     else "; ".join(errs[:3])))
+                if errs:
+                    checks.append(_check("project-mcp-registry", "fail",
+                                         "; ".join(errs[:3])))
+                else:
+                    from cli import mcp as mcp_mod
+                    summary = mcp_mod.attestation_status(doc)
+                    counts = summary["counts"]
+                    detail = ("%d capabilities, attestation: %d attested / %d unverified / %d unattested"
+                              % (caps, counts.get("attested", 0),
+                                 counts.get("unverified", 0), counts.get("unattested", 0)))
+                    risky = sorted(n for n, s in summary["servers"].items()
+                                   if s in ("unverified", "unattested"))
+                    if risky:
+                        detail += " (unprovenanced: %s)" % ", ".join(risky[:5])
+                        checks.append(_check("project-mcp-registry", "warn", detail))
+                    else:
+                        checks.append(_check("project-mcp-registry", "pass", detail))
             except (OSError, ValueError) as exc:
                 checks.append(_check("project-mcp-registry", "fail", "unreadable: %s" % exc))
         else:
