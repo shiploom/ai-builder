@@ -165,7 +165,7 @@ func RunChecks(schemas *validate.Schemas, schemasDir, toolRoot, projectDir strin
 		configPath := filepath.Join(shiploomDir, "config.json")
 		raw, err := os.ReadFile(configPath)
 		if err != nil {
-			add("project-config", "fail", fmt.Sprintf("unreadable: %s", err))
+			add("project-config", "fail", fmt.Sprintf("unreadable: %s", osErrText(configPath, err)))
 		} else if doc, err := jsoncanon.Decode(raw); err != nil {
 			add("project-config", "fail", fmt.Sprintf("unreadable: %s", err))
 		} else if obj, ok := doc.(map[string]any); !ok {
@@ -183,7 +183,7 @@ func RunChecks(schemas *validate.Schemas, schemasDir, toolRoot, projectDir strin
 		manifestPath := filepath.Join(shiploomDir, "manifest.json")
 		raw2, err2 := os.ReadFile(manifestPath)
 		if err2 != nil {
-			add("project-manifest", "fail", fmt.Sprintf("unreadable: %s", err2))
+			add("project-manifest", "fail", fmt.Sprintf("unreadable: %s", osErrText(manifestPath, err2)))
 		} else if doc, err := jsoncanon.Decode(raw2); err != nil {
 			add("project-manifest", "fail", fmt.Sprintf("unreadable: %s", err))
 		} else if obj, ok := doc.(map[string]any); !ok {
@@ -309,6 +309,15 @@ func hasKeys(obj map[string]any, keys ...string) bool {
 		}
 	}
 	return true
+}
+
+// osErrText mirrors FileNotFoundError str() for missing files (same
+// synthesis as run.LoadManifest); other OSError texts differ.
+func osErrText(path string, err error) string {
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("[Errno 2] No such file or directory: '%s'", path)
+	}
+	return err.Error()
 }
 
 // pythonVersion reports the operator python3's "X.Y.Z" (same binary the

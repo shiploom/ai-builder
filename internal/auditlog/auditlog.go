@@ -87,8 +87,15 @@ func InitLog(projectDir string) (map[string]any, error) {
 
 // ReadAll mirrors read_all().
 func ReadAll(projectDir string) ([]map[string]any, error) {
-	raw, err := os.ReadFile(AuditPath(projectDir))
+	path := AuditPath(projectDir)
+	raw, err := os.ReadFile(path)
 	if err != nil {
+		// Byte-parity with FileNotFoundError str() for the missing-file
+		// case (same synthesis as run.LoadManifest); other OSError
+		// texts differ (documented divergence).
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("[Errno 2] No such file or directory: '%s'", path)
+		}
 		return nil, err
 	}
 	var entries []map[string]any

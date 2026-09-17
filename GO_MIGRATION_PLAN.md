@@ -34,7 +34,9 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   (`--export json|md`) + `characterize`
   (`--capture`/`--diff`/`--list`, `--command`/`--timeout`/`--actor`/`--json`) +
   `doctor` (`--json`, offline toolchain/harness/project checks, exit 5 on
-  failure). Parity 59/59.
+  failure) + `pin` (`--check`/`--json`, reproducibility pin) + `upgrade`
+  (`--dry-run`/`--rollback`/`--actor`/`--json`, backup + validation
+  gate). Parity 65/65.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -189,3 +191,24 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   (`shiploom doctor: OK/PROBLEMS (N fail, M warn)`, `[STAT] name detail`)
   and JSON (`ok/checks/failures/warnings`) match. Fixtures pre-build
   config/manifest/audit/oracle/registry in setup for determinism.
+
+## Port notes (P4) — pin/upgrade fidelity contract
+
+- `pin`: live pin reads the tool `core/VERSION` file (like Python
+  `core_version()`), `python3 --version`, `runtime.GOOS` (matches
+  `sys.platform` on darwin/linux; Windows `windows` vs `win32` is a
+  documented divergence), and `--version` probes for harness CLIs with
+  the same 10s-cap/first-line rules. `mcp` versions come from the
+  ported registry loader (failures keep `{}`). Drift lines use `%r`
+  via `PyRepr`; human outputs (`pinned ...`, `pin clean: ...`) are
+  deterministic while `--json` carries a live `pinnedAt`, so fixtures
+  use human lines (plus one JSON run verified manually).
+- `upgrade`: manifest/config/backup round-trips reuse canonical JSON;
+  dry-run payload, incompatible/stale/current branches, rollback
+  restore + unlink, auto-rollback on failed strict validation (first 5
+  non-`.shiploom` errors), and audit entries match. Missing-key order
+  follows `REQUIRED_MANIFEST_KEYS`.
+- Extended the `[Errno 2]` missing-file synthesis (previously manifest
+  and snapshots only) to audit-log reads, doctor config/manifest reads,
+  and upgrade config/backup/pin reads — all verified byte-identical
+  against FileNotFoundError text.
