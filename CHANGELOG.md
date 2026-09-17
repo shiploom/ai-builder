@@ -3,6 +3,91 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## PR37 — P6 dormant Python deprecation notice (unreleased)
+
+- `_maybe_deprecation_notice()` in `cli/shiploom.py`: stderr-only,
+  version-gated (`core/VERSION >= 1.2.0`) and TTY-gated
+  (`sys.stderr.isatty()`), removal v1.3.0. Silent under piped parity
+  harness (77/77 unaffected); force-fire unit tests.
+
+## PR36 — P6 version-parity gate (unreleased)
+
+- `scripts/version-check.sh`: tag == `core/VERSION` == `pyproject.toml`
+  == `wrappers/npx/package.json` == the `core X` field of both
+  `--version` outputs, fail-closed; wired into `release.yml` replacing
+  the inline tag check; static half unit-tested.
+
+## PR35 — P5 distribution (unreleased)
+
+- `go-verify` + 5-platform `go-build` matrix in `release.yml`
+  (checksums + Go module manifest attached); Go source-build brew
+  formula; `curl|sh` installer (`scripts/install.sh`); thin npx
+  launcher (`wrappers/npx`, `@shiploom/cli`); `docs/install.md`
+  rewrite (Go binary primary, Python fallback).
+
+## PR34 — AC demo under Go (unreleased)
+
+- `SHIPLOOM_GO_BIN` mode in `scripts/ac-demo.sh` (every CLI step via the
+  Go binary; `trace REQ-001` covers the trace-offline step); 54/54 pass
+  with the dev interpreter first on PATH.
+
+## PR33 — Go port P4 slice 8: install + init (unreleased)
+
+- `install` (version gate, strict pre-copy validation, offline copy,
+  receipt) and `init` (scaffold, 0700 vault, genesis, seeds) ported;
+  CWD symlink resolution matches `Path.cwd()`; harness scratch dirs
+  canonicalized (`pwd -P`). All 20 commands wired; parity 77/77.
+
+## PR32 — Go port P4 slice 7: conformance (unreleased)
+
+- `internal/conformance` (scratch-generate, profile checks, guard replay,
+  `run_all` + record) + `conformance` command; reports carry no timings
+  so human and JSON outputs are parity-safe.
+
+## PR31 — Go port P4 slice 6: adapters + add (unreleased)
+
+- `internal/adapters` (templates, skill headers, write journal) and
+  `internal/add` (overlay packs, strict validation + rollback,
+  unsigned provenance) + commands. `jsoncanon.MarshalLine` fixes the
+  audit-log line format to match `json.dump` defaults (hashes unchanged).
+
+## PR30 — Go port P4 slice 5: pin + upgrade (unreleased)
+
+- `pin` (reproducibility pin, drift check) and `upgrade` (dry-run,
+  backup + rollback, validation gate) ported; `[Errno 2]` synthesis
+  extended to audit/doctor/upgrade/pin reads.
+
+## PR29 — Go port P4 slice 4: doctor (unreleased)
+
+- `internal/doctor` (toolchain, harness, project checks, exit 5) +
+  `doctor` command with human/JSON parity.
+
+## PR28 — Go port P4 slice 3: audit + characterize (unreleased)
+
+- `audit` (`--export json|md`) and `characterize`
+  (`--capture`/`--diff`/`--list`) ported; snapshot-name quoting and
+  missing-file errors fixed to `PyRepr`/`[Errno 2]` parity.
+
+## PR27 — Go port P4 slice 2: trace + approve + budget + resume (unreleased)
+
+- `trace` (sorted relations/incoming), `approve` (gates, deny/reason),
+  `budget` (`--set`, setdefault semantics), `resume` (position +
+  stepper) ported with byte parity.
+
+## PR26 — Go port P4 slice 1: lock + verify (unreleased)
+
+- `lock` (vault 0700, hash compare) and `verify` (`--report`/`--gates`,
+  quality table) ported; `gates.toReportMap` fixed to
+  jsoncanon-compatible types. Parity 41/41.
+
+## PR25 — Go port P3: orchestrator + read surfaces (unreleased)
+
+- `internal/workflow` (overlay discovery, `uses` resolution, globs),
+  `internal/run` stepper (gates, retries/replan, checkpoints, exits
+  0/2/3/4), `internal/trace`/`status`/`approvals` libraries +
+  `run`/`status`/`approvals` commands with stateful parity fixtures.
+  Parity 32/32.
+
 ## PR24 — Go port P2: validate + leaf libraries (unreleased)
 
 - `internal/jsoncanon` (byte-exact Python JSON shapes), `internal/validate`

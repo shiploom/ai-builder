@@ -1,9 +1,13 @@
 # Post-MVP Plan (PR11–PR14 + backlog)
 
-**Date:** 2026-09-17 · **Status:** PR11–PR21 complete; PR22 (1.1.0 release) in progress
+**Date:** 2026-09-17 · **Status:** PR11–PR22 complete; Go migration P1–P6
+complete (PR23–PR37: full CLI port, 77/77 parity, Go distribution,
+dual-ship gates). **[Supersedes the Python+uv stance below: Go single
+binary is now the default distribution; see `GO_MIGRATION_PLAN.md`.]**
 (Hosting still open — `npm run build` produces a static `out/` directory.)
 **Decisions locked:** CLI completeness leads; stay on Python+uv (Go revisit only
-at 10k-user scale per spec §2.4); no third harness; no enterprise pilot waiting
+at 10k-user scale per spec §2.4) **[superseded 2026-09-17 by the Go migration
+PR23–PR37: Go single binary is the default distribution now]**; no third harness; no enterprise pilot waiting
 (demand-gated items stay unscheduled).
 
 **Principles carried over:** stdlib-only runtime, offline-first, hermetic unit

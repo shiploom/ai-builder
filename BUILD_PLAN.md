@@ -20,7 +20,7 @@ Decided 2026-09-17 (supersede spec defaults where noted):
 
 | Decision | Choice | Spec reference / note |
 |---|---|---|
-| CLI stack | **Python + uv for MVP** | Overrides §2.4 Go-default. Keep §11.8 CLI surface + §11.1–11.2 schemas stable so a Go single-binary can replace Python later without contract break. Validators stdlib-only. |
+| CLI stack | **Python + uv for MVP** | Overrides §2.4 Go-default. Keep §11.8 CLI surface + §11.1–11.2 schemas stable so a Go single-binary can replace Python later without contract break. Validators stdlib-only. **[Superseded 2026-09-17: Go migration P1–P6 complete (PR23–PR37); Go single binary is now the default distribution, Python is the fallback pending removal in v1.3.0. See `GO_MIGRATION_PLAN.md`.]** |
 | First harness targets | **Claude Code + OpenCode only** | Spec MVP scope (§27). Cursor/Kiro/Copilot deferred to post-MVP. |
 | MVP slice order | **Greenfield-first** | `greenfield-full-lite` fully working; `brownfield-fix` skeleton for AC2 smoke, hardened post-MVP. |
 | Docs site timing | **Defer site** | Keep `docs/` as plain Markdown in MVP. Fumadocs site post-MVP per §26. |

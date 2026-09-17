@@ -68,6 +68,14 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
     removal itself is out of scope for P6 (parity harness + Python CLI
     deleted alongside, a minor later). N-1 support per MASTER_SPEC
     deprecation policy.
+  - Transition tracking (calendar-gated, do not start early):
+    - [ ] 1.2.0: `docs/install.md` Python fallback → "deprecated,
+      removal v1.3.0" (notice fires on its own; verify with a TTY run).
+    - [ ] 1.3.0: delete `cli/` + `validators/` Python, `tests/parity/`,
+      `SHIPLOOM_GO_BIN` mode + `$PY` legs in `scripts/ac-demo.sh`,
+      Python job steps in `release.yml`/`validator.yml`, and the fallback
+      docs; Go becomes the sole implementation. Keep `scripts/version-
+      check.sh` (tag/core/pyproject/npx assertions stay valid).
   - Out of scope: `doctor` changes, npm publish automation, Windows CI.
 
 ## Hard parts (release blockers)
