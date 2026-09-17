@@ -19,11 +19,10 @@ npm run build      # static production build (syncs via prebuild)
 - `content/docs/index.mdx` + `meta.json` are hand-authored site structure,
   not synced.
 
-## Hosting (GitHub Pages)
+## Hosting (GitHub Pages, live)
 
 `.github/workflows/docs-site.yml` builds with `PAGES_BASE_PATH` +
-`NEXT_PUBLIC_BASE_PATH` set to `/ai-builder` and publishes `site/out`
-(expected URL: `https://shiploom.github.io/ai-builder`). One manual step
-(needs admin): repo Settings → Pages → Source: **GitHub Actions**. Until
-then the deploy job fails while build stays green. Local builds stay
-unprefixed — `next/link` picks up the base path automatically.
+`NEXT_PUBLIC_BASE_PATH` set to `/ai-builder` and publishes `site/out`.
+Live at `https://shiploom.github.io/ai-builder` (repo Settings → Pages →
+Source: GitHub Actions). Local builds stay unprefixed — `next/link`
+picks up the base path automatically.
