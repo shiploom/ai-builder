@@ -134,3 +134,28 @@ def test_version_reports_core(capsys):
     capsys.readouterr()
     assert main(["--version"]) == 0
     assert "(core %s," % CORE_VERSION in capsys.readouterr().out
+
+
+def test_deprecation_notice_dormant_before_1_2(monkeypatch, capsys):
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+    assert main(["--version"]) == 0  # version path never nags
+    out, err = capsys.readouterr()
+    assert "deprecated" not in err
+
+
+def test_deprecation_notice_fires_when_due(monkeypatch, tmp_path, capsys):
+    import cli.shiploom as shiploom_mod
+    monkeypatch.setattr(shiploom_mod, "_parsed_core_version", lambda: (1, 2, 0))
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+    monkeypatch.chdir(tmp_path)
+    assert main(["trace", "NOPE-999"]) == 2
+    assert "deprecated" in capsys.readouterr().err
+
+
+def test_deprecation_notice_silent_when_piped(monkeypatch, tmp_path, capsys):
+    import cli.shiploom as shiploom_mod
+    monkeypatch.setattr(shiploom_mod, "_parsed_core_version", lambda: (1, 2, 0))
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: False)
+    monkeypatch.chdir(tmp_path)
+    assert main(["trace", "NOPE-999"]) == 2
+    assert "deprecated" not in capsys.readouterr().err

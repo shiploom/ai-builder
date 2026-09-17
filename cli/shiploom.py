@@ -45,6 +45,33 @@ def core_version():
     return (TOOL_ROOT / "core" / "VERSION").read_text(encoding="utf-8").strip()
 
 
+# P6 transition: Python fallback deprecation. Dormant until core 1.2.0
+# (one minor after Go parity); when due, interactive (TTY stderr) users
+# get one line pointing at the Go binary. Piped stderr (parity harness,
+# scripts) never sees it, and stdout stays machine-parseable.
+DEPRECATION_MINOR = (1, 2)
+DEPRECATION_REMOVAL = "v1.3.0"
+
+
+def _parsed_core_version():
+    try:
+        return tuple(int(p) for p in core_version().split(".")[:3])
+    except (OSError, ValueError):
+        return (0,)
+
+
+def _deprecation_due():
+    return _parsed_core_version() >= DEPRECATION_MINOR
+
+
+def _maybe_deprecation_notice():
+    if _deprecation_due() and sys.stderr.isatty():
+        sys.stderr.write(
+            "shiploom: note: the Python implementation is deprecated and "
+            "will be removed in %s; switch to the Go single binary "
+            "(see docs/install.md)\n" % DEPRECATION_REMOVAL)
+
+
 def _fail(message, code=EXIT_VALIDATION):
     sys.stderr.write("shiploom: error: %s\n" % message)
     return code
@@ -1016,6 +1043,7 @@ def main(argv=None):
         return _fail("choose one of --global / --local")
     if not getattr(args, "to_local", False) and not getattr(args, "to_global", False):
         args.to_global = True  # install defaults to global
+    _maybe_deprecation_notice()
     try:
         return args.func(args)
     except BrokenPipeError:

@@ -59,11 +59,11 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
     `core/VERSION` == `pyproject.toml` == `wrappers/npx/package.json` ==
     the `core X` field of both `--version` outputs; wired into
     `release.yml`; static part unit-tested.
-  - Slice 2 (at 1.2.0): Python deprecation notice, version-gated
-    (`core/VERSION >= 1.2.0`) AND TTY-gated (`sys.stderr.isatty()`).
-    Both gates are load-bearing: an always-on Python-only line would
-    break all 77 parity fixtures, and stdout must stay machine-
-    parseable for `ac-demo.sh` greps — so the notice goes to stderr.
+  - Slice 2 (landed dormant): Python deprecation notice in
+    `cli/shiploom.py` (`_maybe_deprecation_notice`, stderr, removal
+    v1.3.0), version-gated (`core/VERSION >= 1.2.0`) AND TTY-gated
+    (`sys.stderr.isatty()`). Verified silent under the piped parity
+    harness (77/77 unaffected) with force-fire unit tests.
   - Slice 3: docs mark the Python fallback deprecated (removal v1.3.0);
     removal itself is out of scope for P6 (parity harness + Python CLI
     deleted alongside, a minor later). N-1 support per MASTER_SPEC
