@@ -3,6 +3,15 @@
 All notable changes, newest first. Version is `core/VERSION`
 (`1.0.0-draft` throughout the MVP series).
 
+## PR13 — Verification depth (unreleased)
+
+- `sast` gate (project-configured command, skip-if-absent like build/lint).
+- `license` gate: lockfile license inventory vs allowlist, report-only.
+- `depAudit`: osv-scanner when present + lockfiles exist (fails on vulns),
+  else inventory + pin check as before.
+- `mutation` gate: deterministic AST candidate sampler, report-only
+  (enforceable thresholds wait on pilot escape data per §33-D2).
+
 ## PR12 — Adapter completion + conformance runner (unreleased)
 
 - `.claude/settings.json`: pinned `PreToolUse` wiring (vendor docs

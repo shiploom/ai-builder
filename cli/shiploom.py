@@ -594,7 +594,7 @@ def build_parser():
     verify.add_argument("--report", action="store_true",
                         help="write verification/gate-report.json")
     verify.add_argument("--gates", default=None,
-                        help="comma-separated subset (build,typecheck,lint,test,contract,secrets,depAudit,compile)")
+                        help="comma-separated subset (build,typecheck,lint,sast,test,contract,secrets,depAudit,license,mutation,compile)")
     verify.add_argument("--json", action="store_true")
     verify.set_defaults(func=cmd_verify)
 

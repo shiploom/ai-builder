@@ -4,24 +4,28 @@
 Gates are code, never LLM judgment. Each gate returns
 {status: pass|fail|skip, command?, exit?, durationS, detail, tail?}.
 
-Gate set (MVP):
-  build/typecheck/lint/contract — project-configured commands only
+Gate set (PR13):
+  build/typecheck/lint/sast/contract — project-configured commands only
     (unconfigured → skip). No auto-run of unknown commands.
   test — configured command, else auto-detected `pytest -q` when
     tests/ exists (npm/go runners: configured only, never auto).
   secrets — built-in stdlib secret scanner (always runs).
-  depAudit — built-in dependency inventory + pin check, report-only
-    (a real vuln DB lookup needs network; arrives post-MVP).
+  depAudit — osv-scanner when present + lockfiles exist (fail on vulns);
+    else built-in inventory + pin check, report-only.
+  license — built-in lockfile license inventory vs allowlist, report-only.
+  mutation — built-in AST candidate sampler, report-only (enforceable
+    thresholds only after pilot escape data per 33-D2).
   compile — built-in `compileall` over project Python files (quality).
 
-Quality table: compile result, secrets result, test result,
-determinism (second test run when the first passes, bounded by the
-same timeout), mutation (report-only note per 33-D2).
+Quality table: compile/secrets/tests/license results, determinism
+(second test run when the first passes, bounded by the same timeout),
+mutation sample counts.
 """
 
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -122,6 +126,168 @@ def dep_inventory(project_dir):
     return {"deps": len(deps), "unpinned": unpinned}
 
 
+LICENSE_ALLOW = frozenset({
+    "MIT", "Apache-2.0", "ISC", "BSD-2-Clause", "BSD-3-Clause", "BSD-4-Clause",
+    "PSF-2.0", "Python-2.0", "CC0-1.0", "Unlicense", "MPL-2.0", "LGPL-2.1-only",
+    "LGPL-2.1-or-later", "LGPL-3.0-only", "LGPL-3.0-or-later", "EPL-2.0",
+})
+
+LICENSE_ALIASES = {
+    "MIT License": "MIT",
+    "Apache License 2.0": "Apache-2.0",
+    "Apache License, Version 2.0": "Apache-2.0",
+    "Apache 2.0": "Apache-2.0",
+    "BSD 3-Clause": "BSD-3-Clause",
+    "BSD 2-Clause": "BSD-2-Clause",
+    "BSD License": "BSD-3-Clause",
+    "ISC License": "ISC",
+    "Python Software Foundation License": "PSF-2.0",
+}
+
+
+def _normalize_license(raw):
+    text = str(raw or "").strip().strip("()")
+    if not text:
+        return None
+    return LICENSE_ALIASES.get(text, text)
+
+
+def license_inventory(project_dir):
+    """Report-only license inventory from lockfiles with SPDX data.
+
+    Reads npm package-lock.json `packages[]` licenses; other ecosystems
+    expose no license fields offline and are reported unknown. Returns
+    {"declared": {dep: license}, "unknown": [deps], "nonAllowlisted": [deps]}.
+    Never fails: enforcement waits on team packs (post-MVP).
+    """
+    import json as _json
+    root = Path(project_dir)
+    declared, unknown = {}, []
+    lock = root / "package-lock.json"
+    if lock.is_file():
+        try:
+            packages = _json.loads(lock.read_text(encoding="utf-8")).get("packages") or {}
+        except (OSError, ValueError):
+            packages = {}
+        for path, meta in packages.items():
+            if not path or not isinstance(meta, dict):
+                continue
+            name = path.split("node_modules/")[-1].split("/")[0]
+            lic = _normalize_license(meta.get("license"))
+            if lic:
+                declared["npm:%s" % name] = lic
+    for dep in sorted(_dep_names(root)):
+        eco, _, name = dep.partition(":")
+        if eco == "npm" and ("npm:%s" % name) in declared:
+            continue
+        unknown.append(dep)
+    non_allowlisted = sorted(n for n, lic in declared.items() if lic not in LICENSE_ALLOW)
+    return {"declared": declared, "unknown": sorted(set(unknown)),
+            "nonAllowlisted": non_allowlisted}
+
+
+def _dep_names(project_dir):
+    """Dependency names as eco:name strings (shared by inventory users)."""
+    root = Path(project_dir)
+    names = set()
+    for req in sorted(root.glob("requirements*.txt")) + sorted(root.glob("requirements/*.txt")):
+        try:
+            for line in req.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or line.startswith("-"):
+                    continue
+                name = re.split(r"[<>=!~\s\[]", line, maxsplit=1)[0].strip()
+                if name:
+                    names.add("pip:%s" % name)
+        except OSError:
+            continue
+    pkg = root / "package.json"
+    if pkg.is_file():
+        try:
+            import json as _json
+            doc = _json.loads(pkg.read_text(encoding="utf-8"))
+            for section in ("dependencies", "devDependencies"):
+                for name in (doc.get(section) or {}):
+                    names.add("npm:%s" % name)
+        except (OSError, ValueError):
+            pass
+    return names
+
+
+MUTATION_LIMIT = 20
+
+
+def mutation_sample(project_dir, limit=MUTATION_LIMIT):
+    """Report-only AST mutation-candidate sampler (deterministic).
+
+    Walks non-test Python files in sorted order and collects candidate
+    sites (comparisons, boolean ops/returns, arithmetic) for a future
+    mutator. Returns {"candidates": total, "sample": [{path, line, kind}]}.
+    Enforceable thresholds wait on pilot escape data (33-D2).
+    """
+    import ast as _ast
+    root = Path(project_dir)
+    found = []
+
+    def _kind(node):
+        if isinstance(node, _ast.Compare):
+            return "comparison"
+        if isinstance(node, _ast.BoolOp):
+            return "boolean-op"
+        if isinstance(node, _ast.UnaryOp) and isinstance(node.op, _ast.Not):
+            return "negation"
+        if isinstance(node, _ast.Return) and isinstance(node.value, _ast.Constant) \
+                and isinstance(node.value.value, bool):
+            return "boolean-return"
+        if isinstance(node, _ast.BinOp):
+            return "arithmetic"
+        return None
+
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and d != "tests"]
+        for fn in sorted(filenames):
+            if not fn.endswith(".py"):
+                continue
+            path = Path(dirpath) / fn
+            try:
+                tree = _ast.parse(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError, SyntaxError):
+                continue
+            for node in _ast.walk(tree):
+                kind = _kind(node)
+                if kind:
+                    found.append({"path": os.path.relpath(path, root),
+                                  "line": getattr(node, "lineno", 0), "kind": kind})
+    found.sort(key=lambda c: (c["path"], c["line"], c["kind"]))
+    return {"candidates": len(found), "sample": found[:limit]}
+
+
+def _osv_scan(project_dir, timeout_s):
+    """Run osv-scanner when present. Returns (vulns, detail) or (None, reason)."""
+    scanner = shutil.which("osv-scanner")
+    if scanner is None:
+        return None, "osv-scanner not on PATH"
+    lockfiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "Cargo.lock",
+                 "Gemfile.lock", "go.mod", "requirements.txt", "poetry.lock"]
+    if not any((Path(project_dir) / name).exists() for name in lockfiles):
+        return None, "no supported lockfiles"
+    import json as _json
+    try:
+        proc = subprocess.run([scanner, "--format", "json", "--recursive", str(project_dir)],
+                              capture_output=True, text=True, timeout=timeout_s)
+        doc = _json.loads(proc.stdout or "{}")
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        return None, "scanner error: %s" % exc
+    vulns = []
+    for result in doc.get("results", []):
+        for package in result.get("packages", []):
+            info = package.get("package", {})
+            for vuln in package.get("vulnerabilities", []):
+                vulns.append("%s@%s %s" % (info.get("name"), info.get("version"),
+                                           vuln.get("id", vuln.get("summary", "?"))))
+    return sorted(set(vulns)), "%d vuln(s)" % len(vulns) if vulns else "clean"
+
+
 def _run_command(command, project_dir, timeout_s):
     """Run a shell-less command with timeout. Returns result dict."""
     started = time.monotonic()
@@ -174,7 +340,8 @@ def run_gates(project_dir, selected=None):
     """Run gates in fixed order. Returns gate report dict (verdict included)."""
     root = Path(project_dir)
     configured = _configured(root)
-    order = ["build", "typecheck", "lint", "test", "contract", "secrets", "depAudit", "compile"]
+    order = ["build", "typecheck", "lint", "sast", "test", "contract",
+             "secrets", "depAudit", "license", "mutation", "compile"]
     if selected:
         unknown = [g for g in selected if g not in order]
         if unknown:
@@ -186,7 +353,7 @@ def run_gates(project_dir, selected=None):
     test_cmd, test_timeout = None, DEFAULT_TIMEOUT_S
 
     for gate_id in order:
-        if gate_id in ("build", "typecheck", "lint", "test", "contract"):
+        if gate_id in ("build", "typecheck", "lint", "sast", "test", "contract"):
             command, reason = _gate_command(gate_id, configured, root)
             entry = configured.get(gate_id) or {}
             timeout_s = entry.get("timeoutS", DEFAULT_TIMEOUT_S) if isinstance(entry, dict) else DEFAULT_TIMEOUT_S
@@ -208,14 +375,48 @@ def run_gates(project_dir, selected=None):
             }
         elif gate_id == "depAudit":
             started = time.monotonic()
+            entry = configured.get("depAudit") or {}
+            timeout_s = entry.get("timeoutS", DEFAULT_TIMEOUT_S) \
+                if isinstance(entry, dict) else DEFAULT_TIMEOUT_S
             inv = dep_inventory(root)
             if inv["unpinned"]:
                 warnings["depAudit"] = "unpinned: %s" % ", ".join(inv["unpinned"][:10])
+            vulns, vuln_detail = _osv_scan(root, timeout_s)
+            if vulns is None:
+                gates[gate_id] = {
+                    "status": "pass", "durationS": round(time.monotonic() - started, 2),
+                    "detail": "%d deps, %d unpinned (%s)"
+                              % (inv["deps"], len(inv["unpinned"]), vuln_detail),
+                    "inventory": inv,
+                }
+            else:
+                gates[gate_id] = {
+                    "status": "fail" if vulns else "pass",
+                    "durationS": round(time.monotonic() - started, 2),
+                    "detail": "osv-scanner: %s" % vuln_detail,
+                    "inventory": inv,
+                    "vulnerabilities": vulns,
+                }
+        elif gate_id == "license":
+            started = time.monotonic()
+            lic = license_inventory(root)
+            if lic["nonAllowlisted"]:
+                warnings["license"] = "non-allowlisted: %s" % ", ".join(lic["nonAllowlisted"][:10])
             gates[gate_id] = {
                 "status": "pass", "durationS": round(time.monotonic() - started, 2),
-                "detail": "%d deps, %d unpinned (report-only; vuln DB lookup post-MVP)"
-                          % (inv["deps"], len(inv["unpinned"])),
-                "inventory": inv,
+                "detail": "%d declared, %d unknown, %d non-allowlisted (report-only)"
+                          % (len(lic["declared"]), len(lic["unknown"]),
+                             len(lic["nonAllowlisted"])),
+                "inventory": lic,
+            }
+        elif gate_id == "mutation":
+            started = time.monotonic()
+            sample = mutation_sample(root)
+            gates[gate_id] = {
+                "status": "pass", "durationS": round(time.monotonic() - started, 2),
+                "detail": "%d candidates sampled (report-only; thresholds post-pilot)"
+                          % sample["candidates"],
+                "sample": sample,
             }
         elif gate_id == "compile":
             result = _run_command(
@@ -229,7 +430,9 @@ def run_gates(project_dir, selected=None):
         "compile": gates.get("compile", {}).get("status", "skip"),
         "secrets": gates.get("secrets", {}).get("status", "skip"),
         "tests": gates.get("test", {}).get("status", "skip"),
-        "mutation": "not-run (report-only sampling, MVP per 33-D2)",
+        "license": gates.get("license", {}).get("status", "skip"),
+        "mutation": gates.get("mutation", {}).get(
+            "detail", "not-run (report-only sampling per 33-D2)"),
     }
     if gates.get("test", {}).get("status") == "pass" and test_cmd:
         second = _run_command(test_cmd, root, test_timeout)

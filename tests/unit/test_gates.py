@@ -2,6 +2,7 @@
 
 import ast
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -200,3 +201,108 @@ def test_verify_step_check_missing_twin(proj, capsys):
 
 def test_gates_module_stdlib_only():
     assert_stdlib_only(REPO / "cli" / "gates.py", extra={"cli", "validators", "json"})
+
+
+def test_sast_configured_and_skipped(proj):
+    set_gate(proj, "sast", "%s -c \"import sys; sys.exit(0)\"" % PY)
+    assert gates_mod.run_gates(proj, selected=["sast"])["gates"]["sast"]["status"] == "pass"
+    set_gate(proj, "sast", "%s -c \"import sys; sys.exit(1)\"" % PY)
+    assert gates_mod.run_gates(proj, selected=["sast"])["gates"]["sast"]["status"] == "fail"
+    report = gates_mod.run_gates(proj, selected=["license", "mutation"])
+    assert "sast" not in report["gates"]
+
+
+def test_license_inventory_declared_and_unknown(proj):
+    write(proj / "package-lock.json", json.dumps({
+        "name": "x",
+        "packages": {
+            "": {"name": "x"},
+            "node_modules/left-pad": {"version": "1.3.0", "license": "MIT"},
+            "node_modules/evil": {"version": "9.9.9", "license": "GPL-3.0-only"},
+            "node_modules/mystery": {"version": "1.0.0"},
+        }}))
+    write(proj / "package.json", json.dumps({"dependencies": {"left-pad": "1.3.0"}}))
+    write(proj / "requirements.txt", "foo\n")
+    inv = gates_mod.license_inventory(proj)
+    assert inv["declared"] == {"npm:left-pad": "MIT", "npm:evil": "GPL-3.0-only"}
+    assert inv["unknown"] == ["pip:foo"]
+    assert inv["nonAllowlisted"] == ["npm:evil"]
+    report = gates_mod.run_gates(proj, selected=["license"])
+    assert report["gates"]["license"]["status"] == "pass"  # report-only
+    assert "non-allowlisted" in report["warnings"]["license"]
+
+
+def test_license_alias_normalization(proj):
+    assert gates_mod._normalize_license("MIT License") == "MIT"
+    assert gates_mod._normalize_license("  ") is None
+    assert gates_mod._normalize_license(None) is None
+
+
+OSV_CLEAN = {"results": []}
+OSV_VULN = {"results": [{"packages": [{"package": {"name": "left-pad", "version": "1.3.0"},
+                                        "vulnerabilities": [{"id": "GHSA-x"}]}]}]}
+
+
+def _fake_osv(bindir, payload):
+    script = bindir / "osv-scanner"
+    script.write_text("#!/usr/bin/env python3\nimport json,sys\n"
+                      "json.dump(%r, sys.stdout)\n" % (payload,))
+    script.chmod(0o755)
+    return bindir
+
+
+def test_dep_audit_osv_clean_and_vuln(proj, tmp_path, monkeypatch):
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    write(proj / "package-lock.json", json.dumps({"name": "x", "packages": {}}))
+    monkeypatch.setenv("PATH", str(bindir) + os.pathsep + os.environ.get("PATH", ""))
+    _fake_osv(bindir, OSV_CLEAN)
+    report = gates_mod.run_gates(proj, selected=["depAudit"])
+    assert report["gates"]["depAudit"]["status"] == "pass"
+    _fake_osv(bindir, OSV_VULN)
+    report = gates_mod.run_gates(proj, selected=["depAudit"])
+    gate = report["gates"]["depAudit"]
+    assert gate["status"] == "fail" and "1 vuln(s)" in gate["detail"]
+    assert gate["vulnerabilities"] == ["left-pad@1.3.0 GHSA-x"]
+
+
+def test_dep_audit_osv_absent_falls_back(proj, tmp_path, monkeypatch):
+    empty = tmp_path / "emptybin"
+    empty.mkdir()
+    monkeypatch.setenv("PATH", str(empty))
+    report = gates_mod.run_gates(proj, selected=["depAudit"])
+    assert report["gates"]["depAudit"]["status"] == "pass"
+    assert "osv-scanner not on PATH" in report["gates"]["depAudit"]["detail"]
+
+
+MUT_SRC = """\
+def f(a, b):
+    if a == b and b > 0:
+        return True
+    return a + b
+    x = not a
+    return x
+"""
+
+
+def test_mutation_sampler_counts_and_limits(proj):
+    write(proj / "src" / "mod.py", MUT_SRC)
+    write(proj / "src" / "broken.py", "def f(:\n")
+    write(proj / "tests" / "test_mod.py", MUT_SRC)  # tests/ excluded
+    sample = gates_mod.mutation_sample(proj)
+    assert sample["candidates"] == 6
+    assert [c["kind"] for c in sample["sample"]] == [
+        "boolean-op", "comparison", "comparison",
+        "boolean-return", "arithmetic", "negation"]
+    limited = gates_mod.mutation_sample(proj, limit=2)
+    assert len(limited["sample"]) == 2 and limited["candidates"] == 6
+    again = gates_mod.mutation_sample(proj)
+    assert again == sample  # deterministic
+    report = gates_mod.run_gates(proj, selected=["mutation"])
+    assert report["gates"]["mutation"]["status"] == "pass"
+
+
+def test_quality_includes_new_gates(proj):
+    report = gates_mod.run_gates(proj)
+    assert report["quality"]["license"] == "pass"
+    assert "candidates" in report["quality"]["mutation"]
