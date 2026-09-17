@@ -3,7 +3,12 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
-## PR18 — Team policy pack template (unreleased)
+## PR19 — GitHub Pages hosting (unreleased)
+
+- `PAGES_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`-aware Next config + fumadocs
+  `baseUrl`; landing links via `next/link` so prefixes apply on deploy.
+- `.github/workflows/docs-site.yml`: drift gate → prefixed static build →
+  Pages deploy (needs one manual step: Pages source = GitHub Actions).
 
 - `examples/team-policy-pack/`: stricter overlay demo (named all-env migration
   deny, actor-conditional deploys, owned allow-list) installable via

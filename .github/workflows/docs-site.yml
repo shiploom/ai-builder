@@ -1,0 +1,58 @@
+name: docs-site
+
+# Publishes site/out to GitHub Pages. One manual step first (needs admin):
+# repo Settings -> Pages -> Build and deployment Source: "GitHub Actions".
+# Until then the deploy job fails while build stays green.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/**"
+      - ".github/workflows/docs-site.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Docs drift gate
+        working-directory: site
+        run: |
+          node scripts/sync-docs.mjs --self-test
+          node scripts/sync-docs.mjs --check
+      - name: Static build (project-pages basePath)
+        working-directory: site
+        env:
+          PAGES_BASE_PATH: /ai-builder
+          NEXT_PUBLIC_BASE_PATH: /ai-builder
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

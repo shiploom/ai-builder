@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const card: React.CSSProperties = {
   border: '1px solid var(--fd-border)',
   borderRadius: '12px',
@@ -65,14 +67,14 @@ export default function HomePage() {
       <h2 style={{ marginTop: '48px' }}>Start here</h2>
       <ul>
         <li>
-          <a href="/docs">Consumer manual (J1–J4)</a> — idea to MVP, brownfield
+          <Link href="/docs">Consumer manual (J1–J4)</Link> — idea to MVP, brownfield
           fixes, team features, hardening
         </li>
         <li>
-          <a href="/docs/install">Install</a> — pipx, uvx, source, verify
+          <Link href="/docs/install">Install</Link> — pipx, uvx, source, verify
         </li>
         <li>
-          <a href="/docs/policy-cookbook">Policy cookbook</a> — default-deny
+          <Link href="/docs/policy-cookbook">Policy cookbook</Link> — default-deny
           packs, gates, approvals
         </li>
       </ul>
