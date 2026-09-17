@@ -3,13 +3,22 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
-## PR20 — Skill catalog completion (unreleased)
+## 1.1.0 (2026-09-17)
+
+Additive minor: CLI completeness (PR11), adapter configs + conformance runner
+(PR12), verification depth (PR13), release train + docs (PR14), docs site +
+Pages hosting (PR15, PR19), MCP attestation groundwork (PR16),
+characterization snapshots (PR17), team pack template (PR18), skill catalog
+completion (PR20), deploy matrix + DAST (PR21), and the 3.9 CI fallback fix.
+Details per PR below; 251 tests green on 3.9+3.13, ac-demo 54/54.
+
+## PR20 — Skill catalog completion (1.1.0)
 
 - Six remaining spec §13 packs: `deployment-plan`, `post-deploy-validate`,
   `docs-generate`, `security-review`, `debug-triage`, `change-plan` —
   base-spec pure, contract-tested. Catalog now 16/16.
 
-## PR21 — Deploy matrix + DAST gate (unreleased)
+## PR21 — Deploy matrix + DAST gate (1.1.0)
 
 - `examples/deploy/{docker,k8s,aws,preview}/` starters (non-root images,
   probed K8s manifests, default-deny netpol, Terraform stub with spend-gate
@@ -17,18 +26,22 @@ All notable changes, newest first. Version is `core/VERSION`
 - `dast` gate: project-configured command, skip-if-absent (a runner cannot
   assume a live target — same rationale as SAST).
 
-## PR19 — GitHub Pages hosting (unreleased)
+## PR19 — GitHub Pages hosting (1.1.0)
 
 - `PAGES_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`-aware Next config + fumadocs
   `baseUrl`; landing links via `next/link` so prefixes apply on deploy.
 - `.github/workflows/docs-site.yml`: drift gate → prefixed static build →
   Pages deploy (needs one manual step: Pages source = GitHub Actions).
 
+## PR18 — Team policy pack template (1.1.0)
+
 - `examples/team-policy-pack/`: stricter overlay demo (named all-env migration
   deny, actor-conditional deploys, owned allow-list) installable via
   `shiploom add policy team`, wired per-step with `policy:`.
 - Cookbook section documents the three team moves; enterprise SSO/RBAC/audit
   export stay demand-gated.
+
+## PR17 — Characterization capture/diff (1.1.0)
 
 - `shiploom characterize --capture NAME [--command CMD] | --diff NAME | --list`:
   behavior snapshots under `./.shiploom/characterization/` (command, exit,
@@ -37,7 +50,7 @@ All notable changes, newest first. Version is `core/VERSION`
 - `regression-verify`/`verify` diff snapshots automatically; `run` surfaces
   checker warnings in human and JSON reports.
 
-## PR16 — MCP attestation groundwork (unreleased)
+## PR16 — MCP attestation groundwork (1.1.0)
 
 - Optional `servers[].attestation` in the registry schema (`sigstore` /
   `pinned-digest` / `tofu` + digest/signer/timestamp; backward compatible).
@@ -47,7 +60,7 @@ All notable changes, newest first. Version is `core/VERSION`
 - `docs/mcp-attestation.md` design note (threat model, method bars, deferred
   automated verification + rug-pull re-approval).
 
-## PR15 — Docs site scaffold (unreleased)
+## PR15 — Docs site scaffold (1.1.0)
 
 - `site/` (Next.js + Fumadocs, static export): landing page + `/docs`
   generated from `docs/` via `scripts/sync-docs.mjs` (frontmatter injection,
@@ -55,7 +68,7 @@ All notable changes, newest first. Version is `core/VERSION`
 - Pinned against installed APIs (provider/next, layouts/docs, mdx config);
   system font stack (no build-time font downloads).
 
-## PR14 — Releases, distribution, docs (unreleased)
+## PR14 — Releases, distribution, docs (1.1.0)
 
 - 1.0.0: `core/VERSION` + `pyproject.toml` bumped (semver policy in
   `core/README.md`); MVP exit declared.
@@ -78,7 +91,7 @@ All notable changes, newest first. Version is `core/VERSION`
 - `mutation` gate: deterministic AST candidate sampler, report-only
   (enforceable thresholds wait on pilot escape data per §33-D2).
 
-## PR12 — Adapter completion + conformance runner (unreleased)
+## PR12 — Adapter completion + conformance runner (1.1.0)
 
 - `.claude/settings.json`: pinned `PreToolUse` wiring (vendor docs
   `code.claude.com/docs/en/hooks`) to a generated stdlib guard hook that
