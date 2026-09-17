@@ -53,8 +53,22 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   installer (`scripts/install.sh`), thin npx launcher
   (`wrappers/npx`, `@shiploom/cli`), and the `docs/install.md`
   rewrite (Go binary primary, Python fallback).
-- P6: transition — dual-ship with version-parity check, Python fallback
-  deprecated one minor after Go parity, then removed.
+- P6 (in progress): transition — dual-ship with version-parity check,
+  Python fallback deprecated one minor after Go parity, then removed.
+  - Slice 1 (this): `scripts/version-check.sh` asserts tag ==
+    `core/VERSION` == `pyproject.toml` == `wrappers/npx/package.json` ==
+    the `core X` field of both `--version` outputs; wired into
+    `release.yml`; static part unit-tested.
+  - Slice 2 (at 1.2.0): Python deprecation notice, version-gated
+    (`core/VERSION >= 1.2.0`) AND TTY-gated (`sys.stderr.isatty()`).
+    Both gates are load-bearing: an always-on Python-only line would
+    break all 77 parity fixtures, and stdout must stay machine-
+    parseable for `ac-demo.sh` greps — so the notice goes to stderr.
+  - Slice 3: docs mark the Python fallback deprecated (removal v1.3.0);
+    removal itself is out of scope for P6 (parity harness + Python CLI
+    deleted alongside, a minor later). N-1 support per MASTER_SPEC
+    deprecation policy.
+  - Out of scope: `doctor` changes, npm publish automation, Windows CI.
 
 ## Hard parts (release blockers)
 

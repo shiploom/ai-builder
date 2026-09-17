@@ -79,18 +79,8 @@ jobs:
           go-version: "1.24"
       - name: Install with dev extras
         run: pip install -e ".[dev]"
-      - name: Tag matches core/VERSION and pyproject
-        run: |
-          python - <<'EOF'
-          import re
-          from pathlib import Path
-          tag = "${{ github.ref_name }}".lstrip("v")
-          core = Path("core/VERSION").read_text().strip()
-          pyproject = Path("pyproject.toml").read_text()
-          pkg = re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1)
-          assert tag == core == pkg, (tag, core, pkg)
-          print("version consistent:", tag)
-          EOF
+      - name: Version parity (tag, core, python, npx, go stamp)
+        run: sh scripts/version-check.sh "" "${{ github.ref_name }}"
       - name: Unit tests
         run: pytest tests/unit -q
       - name: Strict validate + trace

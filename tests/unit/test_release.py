@@ -1,6 +1,7 @@
-"""Hermetic unit tests for --version, pin, upgrade (no network)."""
+"""Hermetic unit tests for --version, pin, upgrade, version parity (no network)."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -119,3 +120,17 @@ def test_upgrade_auto_rollback_on_failed_validation(proj, capsys):
     out = capsys.readouterr().out
     assert "rolled back" in out
     assert _manifest(proj)["coreVersion"] == "0.9.0"  # restored
+
+
+def test_dual_ship_versions_agree():
+    """Static half of scripts/version-check.sh: every version file tracks core."""
+    pyproject = (REPO / "pyproject.toml").read_text()
+    pkg = re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1)
+    npx = json.loads((REPO / "wrappers" / "npx" / "package.json").read_text())["version"]
+    assert pkg == CORE_VERSION == npx
+
+
+def test_version_reports_core(capsys):
+    capsys.readouterr()
+    assert main(["--version"]) == 0
+    assert "(core %s," % CORE_VERSION in capsys.readouterr().out
