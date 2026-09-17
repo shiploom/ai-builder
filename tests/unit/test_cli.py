@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import auditlog, manifest  # noqa: E402
 from cli.shiploom import main  # noqa: E402
@@ -229,14 +230,4 @@ def test_audit_command_codes(proj, capsys):
 
 def test_cli_modules_stdlib_only():
     for mod in ("shiploom", "manifest", "auditlog", "doctor"):
-        tree = ast.parse((REPO / "cli" / (mod + ".py")).read_text(encoding="utf-8"))
-        imports = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                imports.update(a.name.split(".")[0] for a in node.names)
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                imports.add(node.module.split(".")[0])
-        stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-            "argparse", "json", "os", "re", "shutil", "sys", "hashlib",
-            "tempfile", "datetime", "pathlib", "cli", "validators"}
-        assert imports - stdlib - {"cli", "validators"} == set(), (mod, imports)
+        assert_stdlib_only(REPO / "cli" / (mod + ".py"), extra={"cli", "validators"})

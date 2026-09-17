@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import policy as policy_mod  # noqa: E402
 
@@ -91,12 +92,4 @@ def test_match_hooks():
 
 
 def test_policy_module_stdlib_only():
-    tree = ast.parse((REPO / "cli" / "policy.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {"fnmatch", "json", "pathlib"}
-    assert imports - stdlib == set(), imports
+    assert_stdlib_only(REPO / "cli" / "policy.py")

@@ -17,6 +17,8 @@ All notable changes, newest first. Version is `core/VERSION`
   detection (adapter v1.1.0 vs profiles); records gitignored.
 - Per-skill OpenCode granularity not in vendor schema (per-agent `tools`
   only): global defaults ship, skill-scoped agents stay post-MVP.
+- CI fix: shared `tests/unit/_stdlib.py` fallback (a drifted per-test 3.9
+  fallback failed the 3.9 leg; single canonical set now).
 
 ## PR11 — CLI completeness (`281fa17`, 2026-09-17)
 

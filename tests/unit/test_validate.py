@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from validators.validate import (  # noqa: E402
     VAGUE_TERMS,
@@ -321,15 +322,4 @@ def test_cli_exit_codes_and_json_shape(tmp_path):
 
 def test_validator_stdlib_only():
     """validators/validate.py must import stdlib modules only (AGENTS.md)."""
-    import ast
-    tree = ast.parse((REPO / "validators" / "validate.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = getattr(sys, "stdlib_module_names", None)
-    if stdlib is None:  # Python 3.9 fallback
-        stdlib = {"argparse", "json", "os", "re", "sys", "pathlib"}
-    assert imports - set(stdlib) == set()
+    assert_stdlib_only(REPO / "validators" / "validate.py")

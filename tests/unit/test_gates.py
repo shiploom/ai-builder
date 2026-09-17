@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import gates as gates_mod  # noqa: E402
 from cli.shiploom import main  # noqa: E402
@@ -198,14 +199,4 @@ def test_verify_step_check_missing_twin(proj, capsys):
 
 
 def test_gates_module_stdlib_only():
-    tree = ast.parse((REPO / "cli" / "gates.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-        "os", "re", "shlex", "subprocess", "sys", "time", "pathlib",
-        "json", "cli", "validators"}
-    assert imports - stdlib - {"cli", "validators", "json"} == set(), imports
+    assert_stdlib_only(REPO / "cli" / "gates.py", extra={"cli", "validators", "json"})

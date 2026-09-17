@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import approvals as approvals_mod  # noqa: E402
 from cli.shiploom import main  # noqa: E402
@@ -264,16 +265,5 @@ def test_pending_approvals_library(proj):
 
 
 def test_new_modules_stdlib_only():
-    import ast as _ast
     for mod in ("approvals", "add"):
-        tree = _ast.parse((REPO / "cli" / (mod + ".py")).read_text(encoding="utf-8"))
-        imports = set()
-        for node in _ast.walk(tree):
-            if isinstance(node, _ast.Import):
-                imports.update(a.name.split(".")[0] for a in node.names)
-            elif isinstance(node, _ast.ImportFrom) and node.module:
-                imports.add(node.module.split(".")[0])
-        stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-            "fnmatch", "json", "os", "shutil", "stat", "subprocess",
-            "sys", "tempfile", "pathlib", "cli", "validators"}
-        assert imports - stdlib - {"cli", "validators"} == set(), (mod, imports)
+        assert_stdlib_only(REPO / "cli" / (mod + ".py"), extra={"cli", "validators"})

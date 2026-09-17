@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from validators.trace import build_trace, main  # noqa: E402
 from validators.validate import load_schema, validate_against_schema  # noqa: E402
@@ -140,14 +141,4 @@ def test_cli_subprocess_exit_codes(chain, tmp_path):
 
 
 def test_trace_stdlib_only():
-    tree = ast.parse((REPO / "validators" / "trace.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            mods = node.module.split(".")
-            imports.add(mods[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-        "argparse", "json", "sys", "pathlib", "validators"}
-    assert imports - stdlib - {"validators"} == set()
+    assert_stdlib_only(REPO / "validators" / "trace.py", extra={"validators"})

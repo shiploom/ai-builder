@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import auditlog, manifest  # noqa: E402
 from cli import oracle as oracle_mod  # noqa: E402
@@ -178,14 +179,4 @@ def test_lock_detects_git_tracked_oracle(proj, capsys):
 
 
 def test_oracle_module_stdlib_only():
-    tree = ast.parse((REPO / "cli" / "oracle.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-        "json", "os", "stat", "subprocess", "pathlib", "shutil",
-        "cli", "validators"}
-    assert imports - stdlib - {"cli", "validators"} == set(), imports
+    assert_stdlib_only(REPO / "cli" / "oracle.py", extra={"cli", "validators"})

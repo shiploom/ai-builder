@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from cli import manifest  # noqa: E402
 from cli import run as run_mod  # noqa: E402
@@ -284,13 +285,4 @@ def test_status_shows_steps(proj, capsys):
 
 
 def test_run_module_stdlib_only():
-    tree = ast.parse((REPO / "cli" / "run.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-        "fnmatch", "os", "pathlib", "datetime", "cli", "validators"}
-    assert imports - stdlib - {"cli", "validators"} == set(), imports
+    assert_stdlib_only(REPO / "cli" / "run.py", extra={"cli", "validators"})

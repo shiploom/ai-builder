@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _stdlib import assert_stdlib_only
 
 from validators.status import format_human, main, status_of  # noqa: E402
 
@@ -93,13 +94,4 @@ def test_cli_subprocess(tmp_path):
 
 
 def test_status_stdlib_only():
-    tree = ast.parse((REPO / "validators" / "status.py").read_text(encoding="utf-8"))
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(a.name.split(".")[0] for a in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module.split(".")[0])
-    stdlib = set(getattr(sys, "stdlib_module_names", ())) or {
-        "argparse", "json", "sys", "pathlib", "validators"}
-    assert imports - stdlib - {"validators"} == set()
+    assert_stdlib_only(REPO / "validators" / "status.py", extra={"validators"})
