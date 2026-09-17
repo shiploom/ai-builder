@@ -528,7 +528,9 @@ def cmd_lock(args):
 
 def build_parser():
     parser = argparse.ArgumentParser(prog="shiploom", description="Shiploom Core CLI (offline-first).")
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser.add_argument("--version", action="store_true",
+                        help="print tool + core versions and exit")
+    sub = parser.add_subparsers(dest="command", required=False)
 
     install = sub.add_parser("install", help="copy + verify core (offline MVP)")
     install.add_argument("--global", dest="to_global", action="store_true",
@@ -655,6 +657,18 @@ def build_parser():
     conformance.add_argument("--json", action="store_true")
     conformance.set_defaults(func=cmd_conformance)
 
+    pin = sub.add_parser("pin", help="write/check ./.shiploom/lock.json reproducibility pin")
+    pin.add_argument("--check", action="store_true", help="compare live state against the pin")
+    pin.add_argument("--json", action="store_true")
+    pin.set_defaults(func=cmd_pin)
+
+    upgrade = sub.add_parser("upgrade", help="move project to the tool core version (backup + rollback)")
+    upgrade.add_argument("--dry-run", action="store_true", help="report what would change")
+    upgrade.add_argument("--rollback", action="store_true", help="restore the pre-upgrade backup")
+    upgrade.add_argument("--actor", default="human")
+    upgrade.add_argument("--json", action="store_true")
+    upgrade.set_defaults(func=cmd_upgrade)
+
     return parser
 
 
@@ -726,9 +740,210 @@ def cmd_adapters(args):
     return EXIT_OK if not errors else EXIT_VALIDATION
 
 
+REQUIRED_MANIFEST_KEYS = ["coreVersion", "workflow", "workflowVersion",
+                            "artifacts", "gates", "budgets", "retries", "checkpoints"]
+
+UPGRADE_BACKUP = "upgrade-backup.json"
+
+
+def _package_version():
+    try:
+        from importlib import metadata as _metadata
+        return _metadata.version("shiploom-core")
+    except Exception:
+        return "source-tree"
+
+
+def _tool_probe(binary):
+    """First output line of `<binary> --version`, else None (10s cap)."""
+    import shutil as _shutil
+    import subprocess as _subprocess
+    exe = _shutil.which(binary)
+    if exe is None:
+        return None
+    try:
+        proc = _subprocess.run([exe, "--version"], capture_output=True, text=True,
+                               timeout=10)
+    except (OSError, _subprocess.SubprocessError):
+        return None
+    out = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip().splitlines()
+    return out[0].strip()[:120] if out and out[0].strip() else None
+
+
+def cmd_pin(args):
+    try:
+        data = manifest_mod.load(".")
+    except (FileNotFoundError, ValueError) as exc:
+        return _fail("no manifest: %s (run shiploom init)" % exc)
+    lock = {
+        "coreVersion": core_version(),
+        "manifestCore": data.get("coreVersion"),
+        "python": "%s.%s.%s" % sys.version_info[:3],
+        "platform": sys.platform,
+        "harness": {"claude": _tool_probe("claude"), "opencode": _tool_probe("opencode")},
+        "mcp": {},
+        "models": "BYO (harness-owned, never recorded)",
+        "pinnedAt": manifest_mod.utcnow(),
+    }
+    try:
+        from cli import mcp as mcp_mod
+        registry = mcp_mod.load_registry(".")
+        lock["mcp"] = {name: (entry or {}).get("version")
+                       for name, entry in (registry.get("servers") or {}).items()}
+    except ValueError:
+        pass
+    lock_path = Path(".") / ".shiploom" / "lock.json"
+    if args.check:
+        if not lock_path.is_file():
+            return _fail("not pinned (run shiploom pin)")
+        try:
+            pinned = json.loads(lock_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return _fail("unreadable pin: %s" % exc)
+        drifts = []
+        for key in ("coreVersion", "manifestCore", "python", "platform"):
+            if pinned.get(key) != lock.get(key):
+                drifts.append("%s: pinned %r != live %r"
+                              % (key, pinned.get(key), lock.get(key)))
+        for harness, version in lock["harness"].items():
+            if pinned.get("harness", {}).get(harness) != version:
+                drifts.append("harness.%s: pinned %r != live %r"
+                              % (harness, pinned.get("harness", {}).get(harness), version))
+        if pinned.get("mcp") != lock.get("mcp"):
+            drifts.append("mcp registry changed")
+        if args.json:
+            json.dump({"ok": not drifts, "drifts": drifts, "live": lock},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            if drifts:
+                for drift in drifts:
+                    sys.stdout.write("  drift: %s\n" % drift)
+            else:
+                sys.stdout.write("pin clean: %s\n" % lock_path)
+        return EXIT_OK if not drifts else EXIT_VALIDATION
+    lock_path.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    auditlog.append(".", actor="human", action="pin", target="lock.json")
+    if args.json:
+        json.dump({"ok": True, "lock": lock}, sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write("pinned %s\n" % lock_path)
+    return EXIT_OK
+
+
+def cmd_upgrade(args):
+    dot = Path(".") / ".shiploom"
+    try:
+        data = manifest_mod.load(".")
+    except (FileNotFoundError, ValueError) as exc:
+        return _fail("no manifest: %s (run shiploom init)" % exc)
+    config_path = dot / "config.json"
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return _fail("unreadable config: %s" % exc)
+    backup_path = dot / UPGRADE_BACKUP
+    if args.rollback:
+        if not backup_path.is_file():
+            return _fail("no upgrade backup (nothing to roll back)")
+        try:
+            backup = json.loads(backup_path.read_text(encoding="utf-8"))
+            config_path.write_text(json.dumps(backup["config"], indent=2, sort_keys=True)
+                                   + "\n", encoding="utf-8")
+            manifest_mod.save(".", backup["manifest"])
+        except (OSError, ValueError, KeyError) as exc:
+            return _fail("unreadable backup: %s" % exc)
+        auditlog.append(".", actor=args.actor, action="upgrade.rollback",
+                        target=backup.get("from", "?"))
+        try:
+            backup_path.unlink()
+        except OSError:
+            pass
+        if args.json:
+            json.dump({"ok": True, "restored": backup.get("from")},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            sys.stdout.write("rolled back to core %s\n" % backup.get("from"))
+        return EXIT_OK
+    current, target = data.get("coreVersion"), core_version()
+    missing = [k for k in REQUIRED_MANIFEST_KEYS if k not in data]
+    changes = []
+    if current != target:
+        changes = ["./.shiploom/config.json: coreVersion %r -> %r" % (current, target),
+                   "./.shiploom/manifest.json: coreVersion %r -> %r" % (current, target)]
+    if args.dry_run:
+        payload = {"ok": not missing, "current": current, "target": target,
+                   "manifestCompat": missing == [], "missingKeys": missing,
+                   "changes": changes}
+        if args.json:
+            json.dump(payload, sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        else:
+            sys.stdout.write("upgrade %s -> %s\n" % (current, target))
+            if missing:
+                sys.stdout.write("  incompatible manifest, missing: %s\n"
+                                 % ", ".join(missing))
+            if changes:
+                for change in changes:
+                    sys.stdout.write("  would change %s\n" % change)
+            else:
+                sys.stdout.write("  already current, no changes\n")
+        return EXIT_OK if not missing else EXIT_VALIDATION
+    if missing:
+        return _fail("incompatible manifest, missing: %s (re-init or repair first)"
+                     % ", ".join(missing))
+    if current == target:
+        sys.stdout.write("already at core %s\n" % target)
+        if args.json:
+            json.dump({"ok": True, "current": current, "target": target, "changes": []},
+                      sys.stdout, indent=2, sort_keys=True)
+            sys.stdout.write("\n")
+        return EXIT_OK
+    backup_path.write_text(json.dumps({"from": current, "config": config,
+                                       "manifest": data},
+                                      indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    config["coreVersion"] = target
+    config_path.write_text(json.dumps(config, indent=2, sort_keys=True) + "\n",
+                           encoding="utf-8")
+    data["coreVersion"] = target
+    manifest_mod.save(".", data)
+    auditlog.append(".", actor=args.actor, action="upgrade",
+                    target="%s -> %s" % (current, target))
+    errors, _, _ = validator.validate_path(".", strict=True)
+    errors = [e for e in errors if ".shiploom" not in e["path"]]
+    if errors:
+        backup = json.loads(backup_path.read_text(encoding="utf-8"))
+        config_path.write_text(json.dumps(backup["config"], indent=2, sort_keys=True)
+                               + "\n", encoding="utf-8")
+        manifest_mod.save(".", backup["manifest"])
+        auditlog.append(".", actor="system", action="upgrade.rollback",
+                        target="auto after failed validation")
+        sys.stdout.write("upgrade failed validation, rolled back:\n")
+        for err in errors[:5]:
+            sys.stdout.write("  fail: %s: %s\n" % (err["path"], err["message"]))
+        return EXIT_VALIDATION
+    if args.json:
+        json.dump({"ok": True, "current": current, "target": target,
+                   "changes": changes}, sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write("upgraded %s -> %s (backup at %s)\n"
+                         % (current, target, backup_path))
+    return EXIT_OK
+
+
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not getattr(args, "command", None) and getattr(args, "version", False):
+        package = _package_version()
+        sys.stdout.write("shiploom %s (core %s, python %s.%s.%s)\n"
+                         % (package, core_version(), *sys.version_info[:3]))
+        return EXIT_OK
+    if not getattr(args, "command", None):
+        parser.error("a command is required (try --help)")
     if getattr(args, "to_local", False) and getattr(args, "to_global", False):
         return _fail("choose one of --global / --local")
     if not getattr(args, "to_local", False) and not getattr(args, "to_global", False):

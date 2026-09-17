@@ -1,6 +1,7 @@
 # Post-MVP Plan (PR11–PR14 + backlog)
 
-**Date:** 2026-09-17 · **Status:** PR11–PR12 complete; PR13 in progress
+**Date:** 2026-09-17 · **Status:** PR11–PR13 complete; PR14 in progress
+(Fumadocs shell deferred — content manuals ship first, see below)
 **Decisions locked:** CLI completeness leads; stay on Python+uv (Go revisit only
 at 10k-user scale per spec §2.4); no third harness; no enterprise pilot waiting
 (demand-gated items stay unscheduled).

@@ -3,7 +3,21 @@
 All notable changes, newest first. Version is `core/VERSION`
 (`1.0.0-draft` throughout the MVP series).
 
-## PR13 — Verification depth (unreleased)
+## PR14 — Releases, distribution, docs (unreleased)
+
+- 1.0.0: `core/VERSION` + `pyproject.toml` bumped (semver policy in
+  `core/README.md`); MVP exit declared.
+- `shiploom --version`, `pin [--check]` (lock.json + drift), `upgrade
+  [--dry-run] [--rollback]` (backup, compat check, auto-rollback on
+  failed validation).
+- Tag-triggered release workflow (version gate, full validation, sdist +
+  wheel + CycloneDX SBOM, GitHub release); manual cosign step documented.
+- Brew formula template (filled at first release); install + release docs;
+  consumer manual (J1–J4), policy cookbook, brownfield playbook,
+  cost-dashboard contract + collector stub.
+- `scripts/playground.sh` (docker-gated AC demo on bare images).
+
+## PR13 — Verification depth (2026-09-17)
 
 - `sast` gate (project-configured command, skip-if-absent like build/lint).
 - `license` gate: lockfile license inventory vs allowlist, report-only.

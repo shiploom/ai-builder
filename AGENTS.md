@@ -34,6 +34,8 @@
 - `shiploom approvals [--watch]` — pending human gates
 - `shiploom add <kind> <name> --from SRC [--tag]` — overlay content packs
 - `shiploom conformance --harness <name|all> [--record]` — deterministic harness checks
+- `shiploom pin [--check]` — reproducibility pin + drift check
+- `shiploom upgrade [--dry-run] [--rollback]` — move project core version
 - `pytest tests/unit -q` — hermetic unit tests (no network)
 
 ## Nested scopes

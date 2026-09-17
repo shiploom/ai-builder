@@ -15,8 +15,9 @@ import sys
 from pathlib import Path
 
 FALLBACK = frozenset({
-    "argparse", "ast", "datetime", "fnmatch", "hashlib", "json", "os", "pathlib",
-    "re", "shlex", "shutil", "stat", "subprocess", "sys", "tempfile", "time",
+    "argparse", "ast", "datetime", "fnmatch", "hashlib", "importlib", "json",
+    "os", "pathlib", "re", "shlex", "shutil", "stat", "subprocess", "sys",
+    "tempfile", "time",
 })
 
 
