@@ -1,0 +1,53 @@
+{
+  "policyId": "team-example",
+  "version": "1.0.0",
+  "description": "Example team overlay on the default-deny posture: stricter migration rule, actor-conditional deploy approvals, and an explicit allow-list your workflows' policy gates must stay inside. Copy and tighten; enterprise SSO/RBAC/audit-export stay demand-gated.",
+  "defaultEffect": "deny",
+  "rules": [
+    {
+      "id": "deny-destructive",
+      "effect": "deny",
+      "actions": ["infra.destroy", "db.destroy", "db.migrate", "secret.exfiltrate"],
+      "resources": ["*"],
+      "message": "destructive action denied by team policy (stricter than default: all envs, not just prod)"
+    },
+    {
+      "id": "approve-agent-deploy",
+      "effect": "require-approval",
+      "actions": ["deploy.*", "release.*"],
+      "resources": ["*"],
+      "condition": {"actor": "agent"},
+      "message": "agent-driven deployments require a recorded human approval"
+    },
+    {
+      "id": "allow-human-deploy",
+      "effect": "allow",
+      "actions": ["deploy.*", "release.*"],
+      "resources": ["*"],
+      "condition": {"actor": "human"},
+      "message": "human-driven deployments permitted"
+    },
+    {
+      "id": "approve-merge-protected",
+      "effect": "require-approval",
+      "actions": ["merge.protected", "push.main"],
+      "resources": ["*"],
+      "message": "protected-branch merges require a recorded human approval"
+    },
+    {
+      "id": "approve-spend",
+      "effect": "require-approval",
+      "actions": ["spend.commit", "infra.provision"],
+      "resources": ["*"],
+      "message": "spend and provisioning require a recorded human approval"
+    },
+    {
+      "id": "allow-team-pipeline",
+      "effect": "allow",
+      "actions": ["repo.read", "test.run", "artifact.read", "workflow.step",
+                  "characterize.capture", "characterize.diff"],
+      "resources": ["*"],
+      "message": "read-local pipeline actions permitted (extend only deliberately)"
+    }
+  ]
+}

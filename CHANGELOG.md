@@ -3,7 +3,13 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
-## PR17 — Characterization capture/diff (unreleased)
+## PR18 — Team policy pack template (unreleased)
+
+- `examples/team-policy-pack/`: stricter overlay demo (named all-env migration
+  deny, actor-conditional deploys, owned allow-list) installable via
+  `shiploom add policy team`, wired per-step with `policy:`.
+- Cookbook section documents the three team moves; enterprise SSO/RBAC/audit
+  export stay demand-gated.
 
 - `shiploom characterize --capture NAME [--command CMD] | --diff NAME | --list`:
   behavior snapshots under `./.shiploom/characterization/` (command, exit,

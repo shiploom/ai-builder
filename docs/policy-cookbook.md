@@ -39,3 +39,20 @@ shiploom approve ship-prod --deny --reason "..."   # reason mandatory
 
 Denied gates halt `run` with exit 2 until re-approved. Every decision lands
 in the hash-chained audit log.
+
+## Starting from the team template
+
+`examples/team-policy-pack/` is a stricter overlay showing the three moves
+teams actually make: name the denial (`db.migrate` in all envs, with an
+auditable message instead of silent default-deny), condition on actor
+(agent deploys need approval, human deploys pass), and own your allow-list
+(every `gate: policy` action your workflows declare must match, or the
+pack blocks it and names the rule to review).
+
+```bash
+shiploom add policy team --from examples/team-policy-pack
+```
+
+then point steps at it with `policy: .shiploom/policies/team.json`.
+Graduating to enterprise (SSO/RBAC, audit export, attestation-required MCP)
+still waits on a pilot — the template is the policy half, ready to extend.
