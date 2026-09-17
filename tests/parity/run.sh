@@ -33,6 +33,10 @@ run_one() {
   work="$REPO"; case_tmp=""
   if [ -f "$dir/setup.sh" ]; then
     case_tmp="$(mktemp -d "${TMPDIR:-/tmp}/shiploom-case.XXXXXX")"
+    # Resolve symlinks (macOS /tmp -> /private/tmp): both CLIs report
+    # physical paths (Python Path.cwd() resolves; Go matches it), so the
+    # scratch dir must be physical for PROJ/TMP masking to hit.
+    case_tmp="$(cd "$case_tmp" && pwd -P)"
     if ! (cd "$case_tmp" && REPO="$REPO" sh "$dir/setup.sh"); then
       echo "FAIL $name: setup.sh failed"
       rm -rf "$case_tmp"

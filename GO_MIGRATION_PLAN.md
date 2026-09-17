@@ -23,7 +23,7 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   (find/load/resolve_uses/glob), `internal/run` stepper, `internal/trace`,
   `internal/status`, `internal/approvals` + `run`/`status`/`approvals` CLI
   wiring. Parity 32/32 (CPython 3.9 + 3.13 legs).
-- P4 (in progress): full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
+- P4 (shipped): full CLI surface — flags, exit codes 0/2/3/4/5, human-readable output
   byte-identical (`ac-demo.sh` parses them). Shipped slices: `lock`
   (`--check`/`--actor`/`--json`, vault 0700) + `verify`
   (`--report`/`--gates`/`--json`, deterministic quality table) +
@@ -39,8 +39,10 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   gate) + `adapters` (`--list`/`--generate`/`--json`, idempotent harness
   files) + `add` (`--from`/`--tag`/`--force`/`--actor`/`--json`, overlay
   packs with strict validation + rollback) + `conformance`
-  (`--harness`/`--record`/`--json`, scratch-generate + profile checks).
-  Parity 73/73.
+  (`--harness`/`--record`/`--json`, scratch-generate + profile checks) +
+  `install` (`--global`/`--local`/`--version`, offline core copy) + `init`
+  (`--green`/`--existing`/`--harness`/`--stack`/`--force`, project
+  scaffold). All 20 commands wired. Parity 77/77.
 - P5: distribution — extend `release.yml` (go build matrix + existing SBOM
   pattern), brew tap activation, formula from template, npx wrapper.
 - P6: transition — dual-ship with version-parity check, Python fallback
@@ -255,3 +257,21 @@ full AC demo passing under the Go binary; `docs/install.md` rewritten
   _records/`) share byte shapes with the library writer; fixtures never
   use `--record` (it would dirty the repo). Reports carry no durations
   or timestamps, so human and JSON outputs are both parity-safe.
+
+## Port notes (P4) — install/init fidelity contract (P4 complete)
+
+- `install`: version gate, strict pre-copy validation of `core/` +
+  `examples/` (failures to stderr, first 10), `dirs_exist_ok` copy of
+  `core/schemas/validators` (`__pycache__` skipped, modes preserved),
+  receipt, and the `--global/--local` defaulting (`--global` when
+  neither; conflict fails) match. `--global` fixtures are avoided (they
+  write `$HOME`); `--local` is stateful with PROJ-masked paths.
+- `init`: exclusive `--green/--existing`, harness allowlist (exit 5),
+  0700 vault (chmod faults ignored), `.gitignore`, config (with
+  `stack: null` default), registry, genesis manifest, audit
+  genesis + `project.init`, and byte-copy seed files match. Dot-exists
+  guard and seed kept/seeded notes match.
+- Both resolve CWD symlinks (`EvalSymlinks`, mirroring `Path.cwd()`)
+  so macOS `/tmp -> /private/tmp` reports match CPython byte-for-byte.
+  The parity harness now also canonicalizes its scratch dir (`pwd -P`)
+  so PROJ/TMP masking hits on symlinked TMPDIRs.
