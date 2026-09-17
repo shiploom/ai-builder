@@ -24,3 +24,5 @@ node_modules/
 # Validator caches
 .validator-cache/
 .pytest_cache/
+# Conformance record snapshots (local drift diffing, regenerated)
+tests/conformance/_records/

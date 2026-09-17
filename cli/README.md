@@ -19,6 +19,8 @@ Added (PR11): `trace <id> [path] [--json]` (trace subgraph + referenced-by),
 [--watch] [--interval S] [--json]` (pending gates; rationale cards need a
 manifest schema follow-up), `add <kind> <name> --from PATH-OR-URL [--tag]
 [--force]` (overlay install, strict-validated, unsigned provenance).
+Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--json]`
+(deterministic profile checks incl. live guard behavior; records gitignored).
 
 - `manifest.py` — orchestrator-owned manifest (atomic saves, kill-safe).
 - `auditlog.py` — append-only hash-chained audit log + verify/export.
@@ -30,6 +32,7 @@ manifest schema follow-up), `add <kind> <name> --from PATH-OR-URL [--tag]
   auto-detected pytest, built-in secrets scan + dep inventory (report-only)
   + compileall, 2× determinism check, verify-step checker.
 - `adapters.py` — single-source core → harness files (`DO NOT EDIT` headers).
+- `conformance.py` — deterministic harness checks (generate + profile asserts).
 - `policy.py` — JSON-policy packs + hook matching (deny > require-approval
   > allow; conditional rules win ties). Policy gates deny with exit 3.
 - `mcp.py` — capability → provider-chain resolution + quarantine flags.

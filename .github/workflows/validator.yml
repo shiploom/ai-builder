@@ -44,3 +44,5 @@ jobs:
           shiploom audit
       - name: AC demo (AC1-AC6, ~90s; node leg skips if unavailable)
         run: SHIP_PY="$(command -v python)" sh scripts/ac-demo.sh
+      - name: Harness conformance (deterministic, no LLM calls)
+        run: shiploom conformance --harness all

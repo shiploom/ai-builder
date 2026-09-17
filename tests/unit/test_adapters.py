@@ -2,6 +2,7 @@
 
 import ast
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -27,8 +28,10 @@ def proj(tmp_path, monkeypatch):
 def test_list_adapters():
     adapters = adapters_mod.list_adapters()
     assert {a["adapter"] for a in adapters} == {"base", "claude", "opencode"}
+    versions = {a["adapter"]: a["version"] for a in adapters}
+    assert versions == {"base": "1.0.0", "claude": "1.1.0", "opencode": "1.1.0"}
     for adapter in adapters:
-        assert adapter["version"] == "1.0.0" and adapter["description"]
+        assert adapter["description"]
 
 
 def test_generate_base(proj):
@@ -62,11 +65,44 @@ def test_generate_claude_skills_mirror_core(proj):
     assert (proj / "CLAUDE.md").exists()
 
 
+def test_generate_claude_settings_and_guard(proj):
+    import json as _json
+    import subprocess as _subprocess
+    report, errors = adapters_mod.generate("claude", proj)
+    assert errors == []
+    settings = _json.loads((proj / ".claude" / "settings.json").read_text())
+    groups = settings["hooks"]["PreToolUse"]
+    assert any("shiploom-guard.py" in str(h.get("command", ""))
+               for g in groups for h in g["hooks"])
+    guard = proj / ".claude" / "hooks" / "shiploom-guard.py"
+    assert guard.is_file()
+    if os.name == "posix":
+        assert guard.stat().st_mode & 0o111
+    oracle_event = _json.dumps({"tool_name": "Edit",
+                                "tool_input": {"file_path": ".shiploom/.oracle/x"}})
+    proc = _subprocess.run([sys.executable, str(guard)], input=oracle_event,
+                           capture_output=True, text=True, timeout=30)
+    decision = _json.loads(proc.stdout)["hookSpecificOutput"]
+    assert proc.returncode == 0 and decision["permissionDecision"] == "deny"
+    benign_event = _json.dumps({"tool_name": "Edit",
+                                "tool_input": {"file_path": "src/app.py"}})
+    proc = _subprocess.run([sys.executable, str(guard)], input=benign_event,
+                           capture_output=True, text=True, timeout=30)
+    assert proc.returncode == 0 and not proc.stdout.strip()
+    proc = _subprocess.run([sys.executable, str(guard)], input="not json",
+                           capture_output=True, text=True, timeout=30)
+    assert proc.returncode == 0 and not proc.stdout.strip()
+
+
 def test_generate_opencode(proj):
+    import json as _json
     report, errors = adapters_mod.generate("opencode", proj)
     assert errors == []
     assert sorted(p.name for p in (proj / ".opencode" / "skills").iterdir()) == CORE_SKILLS
-    assert not (proj / "opencode.json").exists()  # deferred, documented
+    config = _json.loads((proj / "opencode.json").read_text(encoding="utf-8"))
+    assert config["$schema"] == "https://opencode.ai/config.json"
+    assert "AGENTS.md" in config["instructions"]
+    assert config["permission"] == {"edit": "ask", "bash": "ask"}
 
 
 def test_generate_unknown_adapter(proj):

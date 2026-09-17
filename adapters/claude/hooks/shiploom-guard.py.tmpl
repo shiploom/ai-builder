@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+# DO NOT EDIT — generated from Shiploom core {{coreVersion}}; edit core
+# source (adapters/claude/hooks/shiploom-guard.py.tmpl), then re-run
+# `shiploom adapters --generate`.
+"""Shiploom harness guard: enforces core deny rules inside Claude Code.
+
+Reads the PreToolUse JSON event on stdin, emits a deny decision for
+builder writes under the oracle vault (the `before_file_write` registry
+entry), and stays silent otherwise (exit 0 = no decision, so
+normal permission flow applies). Python stdlib only.
+"""
+
+import json
+import sys
+
+ORACLE_SEGMENT = ".shiploom/.oracle/"
+WRITE_TOOLS = ("Edit", "Write")
+
+
+def decides_deny(event):
+    """Return a reason string when the event must be denied, else None."""
+    if not isinstance(event, dict):
+        return None
+    tool_input = event.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return None
+    if event.get("tool_name") not in WRITE_TOOLS:
+        return None
+    path = tool_input.get("file_path") or ""
+    if not isinstance(path, str):
+        return None
+    normalized = path.replace("\\", "/")
+    if ORACLE_SEGMENT in normalized or normalized.rstrip("/").endswith(".shiploom/.oracle"):
+        return ("Shiploom: oracle vault is builder-invisible "
+                "(core {{coreVersion}})")
+    return None
+
+
+def main(argv=None):
+    del argv
+    try:
+        event = json.load(sys.stdin)
+    except (ValueError, OSError):
+        return 0
+    reason = decides_deny(event)
+    if reason is None:
+        return 0
+    json.dump({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": reason,
+    }}, sys.stdout)
+    sys.stdout.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

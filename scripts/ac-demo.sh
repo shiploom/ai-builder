@@ -99,6 +99,10 @@ expect 0 "adapters generate all" -- ship adapters --generate all
 [ -f "$P/AGENTS.md" ] && [ -f "$P/CLAUDE.md" ] && ok "AGENTS.md + CLAUDE.md" || bad "harness facts files"
 [ "$(find "$P/.claude/skills" "$P/.opencode/skills" -name SKILL.md | wc -l | tr -d ' ')" = "20" ] \
   && ok "10 skills x 2 harnesses" || bad "skill count"
+[ -f "$P/.claude/settings.json" ] && [ -f "$P/opencode.json" ] \
+  && [ -x "$P/.claude/hooks/shiploom-guard.py" ] \
+  && ok "settings.json + opencode.json + guard hook" || bad "harness config files"
+expect 0 "conformance all harnesses" -- ship conformance --harness all
 expect 0 "generated tree strict-clean" -- ship validate --strict .
 patch_test_gate "$P" "$PY" -m pytest tests -q
 expect 0 "verify python stack" -- ship verify

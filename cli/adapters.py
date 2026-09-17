@@ -122,6 +122,12 @@ def generate(harness, project_dir):
             created = not dest.exists()
             dest.write_text(content, encoding="utf-8")
             report["created" if created else "updated"].append(rel)
+        if "/hooks/" in rel and dest.suffix in (".py", ".sh"):
+            try:
+                mode = dest.stat().st_mode
+                dest.chmod(mode | 0o111)
+            except OSError:
+                pass  # non-POSIX filesystems: harness runs hooks explicitly
 
     for output in mapping.get("outputs", []):
         template_path = src / output.get("template", "")

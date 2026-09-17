@@ -1,6 +1,6 @@
 # Post-MVP Plan (PR11–PR14 + backlog)
 
-**Date:** 2026-09-17 · **Status:** PR11 complete (205 tests green)
+**Date:** 2026-09-17 · **Status:** PR11 complete; PR12 in progress
 **Decisions locked:** CLI completeness leads; stay on Python+uv (Go revisit only
 at 10k-user scale per spec §2.4); no third harness; no enterprise pilot waiting
 (demand-gated items stay unscheduled).

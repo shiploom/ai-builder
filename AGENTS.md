@@ -33,6 +33,7 @@
 - `shiploom resume` — position report + advance bound workflow
 - `shiploom approvals [--watch]` — pending human gates
 - `shiploom add <kind> <name> --from SRC [--tag]` — overlay content packs
+- `shiploom conformance --harness <name|all> [--record]` — deterministic harness checks
 - `pytest tests/unit -q` — hermetic unit tests (no network)
 
 ## Nested scopes

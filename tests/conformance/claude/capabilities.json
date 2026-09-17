@@ -4,14 +4,14 @@
   "title": "Shiploom conformance profile: Claude Code",
   "description": "Portable subset plus Claude progressive enhancement. Hook-event mapping and settings.json permissions deferred post-MVP (PR10 closed); this profile pins what MVP generation guarantees.",
   "harness": "claude",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "skillFieldsHonored": ["name", "description", "license", "compatibility", "metadata", "x-shiploom-harness"],
   "skillFieldsIgnored": [],
   "hookEvents": ["before_tool", "after_tool", "before_file_write", "after_file_write", "before_commit", "before_merge", "before_infra", "before_migration", "before_deploy", "after_deploy", "on_verify_fail", "on_security_fail", "before_agent", "after_agent"],
-  "hookEventsMappedMVP": [],
+  "hookEventsMappedMVP": ["PreToolUse"],
   "mcpTransports": ["stdio", "sse", "streamable-http"],
   "permissionsModel": "settings.json allow/deny (post-MVP); deny-means-deny enforced by orchestrator now",
   "contextLimits": "harness-defined",
-  "mustProduce": ["CLAUDE.md", ".claude/skills/<name>/SKILL.md"],
+  "mustProduce": ["CLAUDE.md", ".claude/skills/<name>/SKILL.md", ".claude/settings.json", ".claude/hooks/shiploom-guard.py"],
   "mustValidate": ["generated SKILL.md files pass validate --strict", "frontmatter byte-identical to core source"]
 }

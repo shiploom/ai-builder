@@ -21,6 +21,7 @@ from cli import adapters as adapters_mod  # noqa: E402
 from cli import add as add_mod  # noqa: E402
 from cli import approvals as approvals_mod  # noqa: E402
 from cli import auditlog  # noqa: E402
+from cli import conformance as conformance_mod  # noqa: E402
 from cli import doctor as doctor_mod  # noqa: E402
 from cli import gates as gates_mod  # noqa: E402
 from cli import manifest as manifest_mod  # noqa: E402
@@ -646,7 +647,54 @@ def build_parser():
     add.add_argument("--json", action="store_true")
     add.set_defaults(func=cmd_add)
 
+    conformance = sub.add_parser("conformance", help="deterministic harness-conformance checks")
+    conformance.add_argument("--harness", default="all",
+                             help="base|claude|opencode|all (default all)")
+    conformance.add_argument("--record", action="store_true",
+                             help="save JSON reports under tests/conformance/_records/")
+    conformance.add_argument("--json", action="store_true")
+    conformance.set_defaults(func=cmd_conformance)
+
     return parser
+
+
+def cmd_conformance(args):
+    if args.json:
+        if args.harness == "all":
+            ok, results = conformance_mod.run_all(record=args.record)
+            json.dump({"ok": ok, "results": results},
+                      sys.stdout, indent=2, sort_keys=True)
+        else:
+            ok, report = conformance_mod.check_harness(args.harness)
+            if args.record and ok:
+                conformance_mod.RECORDS_DIR.mkdir(parents=True, exist_ok=True)
+                (conformance_mod.RECORDS_DIR / ("%s.json" % args.harness)).write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            json.dump({"ok": ok, **report}, sys.stdout, indent=2, sort_keys=True)
+        sys.stdout.write("\n")
+        return EXIT_OK if ok else EXIT_VALIDATION
+    if args.harness == "all":
+        ok, results = conformance_mod.run_all(record=args.record)
+        for harness, report in results.items():
+            sys.stdout.write("%-8s %s (%d fail)\n" % (
+                harness, "PASS" if report["ok"] else "FAIL",
+                report.get("failures", 0)))
+            for check in report.get("checks", []):
+                if check["status"] == "fail":
+                    sys.stdout.write("  fail: %s: %s\n" % (check["name"], check["detail"]))
+    else:
+        ok, report = conformance_mod.check_harness(args.harness)
+        if args.record and ok:
+            conformance_mod.RECORDS_DIR.mkdir(parents=True, exist_ok=True)
+            (conformance_mod.RECORDS_DIR / ("%s.json" % args.harness)).write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        sys.stdout.write("%s: %s\n" % (args.harness, "PASS" if ok else "FAIL"))
+        for check in report.get("checks", []):
+            mark = "+" if check["status"] == "pass" else "x"
+            sys.stdout.write("  [%s] %-24s %s\n" % (mark, check["name"], check["detail"]))
+        for err in report.get("errors", []):
+            sys.stdout.write("  fail: %s\n" % err)
+    return EXIT_OK if ok else EXIT_VALIDATION
 
 
 def cmd_adapters(args):
