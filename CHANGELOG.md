@@ -3,6 +3,15 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## PR24 — Go port P2: validate + leaf libraries (unreleased)
+
+- `internal/jsoncanon` (byte-exact Python JSON shapes), `internal/validate`
+  (schema subset, frontmatter parser, dispatch, wired `validate` command),
+  `internal/manifest`, `internal/auditlog`, `internal/mcp`, `internal/policy`.
+- Cross-implementation audit chains verified both directions (incl. mutual
+  tamper detection); parity cases extended (strict/relaxed/warn/fail) with
+  hermetic tmp-fixture support in the harness.
+
 ## PR23 — Go port P1: scaffold + parity harness (unreleased)
 
 - `go.mod` (`github.com/shiploom/ai-builder`, stdlib-only), `cmd/shiploom`,

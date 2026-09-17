@@ -46,6 +46,6 @@ Added (PR12): `conformance --harness <base|claude|opencode|all> [--record] [--js
 ## Go port (in progress, see GO_MIGRATION_PLAN.md)
 
 `cmd/shiploom/` + `internal/` mirror this surface stdlib-only; `tests/parity/`
-holds the golden harness (Python reference vs Go binary). Until a command's
-`Run` is ported, the Go binary fails closed (exit 2) with a Python-fallback
-pointer — never partial behavior.
+holds the golden harness (Python reference vs Go binary). Ported commands
+(`validate`, …) behave identically; unported ones fail closed (exit 2) with
+a Python-fallback pointer — never partial behavior.

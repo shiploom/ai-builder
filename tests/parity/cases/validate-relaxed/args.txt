@@ -1,0 +1,1 @@
+validate examples/greenfield-starter

@@ -45,3 +45,26 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
 Parity suite green on darwin/linux/windows; binary <10MB; cold start <50ms;
 full AC demo passing under the Go binary; `docs/install.md` rewritten
 ("No Go single binary is planned" is false post-migration).
+
+## Port notes (P2) — fidelity contract and known divergences
+
+- Canonical JSON: Python `json.dump(sort_keys, indent=2, ensure_ascii)` and
+  compact-separator hash inputs reproduced byte-exact (`internal/jsoncanon`),
+  proven by embedded CPython goldens. Audit chains are mutually verifiable
+  across implementations in both directions (interop test).
+- Numbers keep literals (`json.Number`): `800000` stays integral while
+  `"25.0"` stays float, so integer checks, `%r` output, and manifest bytes
+  match. Manifest floats like `25.0` round-trip byte-identical.
+- `pyRepr`/`pyEqual` mirror CPython `repr()`/`==` for JSON scalars
+  (single-quote preference, `\x7f` escaping, `True == 1`).
+- fnmatch ported from the CPython algorithm (including `*` crossing `/`,
+  unlike Go's path.Match); truth table generated from CPython itself.
+- Lengths count runes (Python `len(str)`); `\n`-only splitlines parity.
+- Deterministic where Python is: sorted patternProperties, sorted link
+  pass, sorted error output.
+- Deliberate divergences (all fail-closed, never silent wrong): engine
+  suffixes on regexp/JSON error text; exotic numerics (hex floats,
+  misplaced underscores); non-UTF8 `.md` (Python tracebacks, Go reports
+  clean); unhashable workflow ids/links (Python crashes, Go skips);
+  malformed packs (Python may crash, Go non-matches); dict-in-enum key
+  order. No committed fixture exercises any of these.

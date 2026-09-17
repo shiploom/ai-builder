@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/shiploom/ai-builder/internal/validate"
 	"github.com/shiploom/ai-builder/internal/version"
 )
 
@@ -31,11 +32,21 @@ type Command struct {
 	Run  func(args []string) int
 }
 
+// Register attaches a ported implementation to a table entry.
+// Unknown names are ignored so registration order never matters.
+func Register(name string, run func(args []string) int) {
+	for i := range Table {
+		if Table[i].Name == name {
+			Table[i].Run = run
+		}
+	}
+}
+
 // Table lists every subcommand the Python CLI accepts.
 var Table = []Command{
 	{"install", "copy + verify core (offline MVP)", nil},
 	{"init", "scaffold ./.shiploom/ + seed starter artifact", nil},
-	{"validate", "schemas + frontmatter + links", nil},
+	{"validate", "schemas + frontmatter + links", validate.RunValidate},
 	{"status", "manifest + artifact states + budgets", nil},
 	{"doctor", "harness + MCP + toolchain compat (offline)", nil},
 	{"audit", "verify + export the audit log", nil},

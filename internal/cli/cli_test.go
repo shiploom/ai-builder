@@ -17,8 +17,9 @@ func TestTableCoversAllCommands(t *testing.T) {
 		if Table[i].Help == "" {
 			t.Fatalf("command %q has empty help", name)
 		}
-		if Table[i].Run != nil {
-			t.Fatalf("command %q unexpectedly ported in P1", name)
+		wantWired := name == "validate"
+		if (Table[i].Run != nil) != wantWired {
+			t.Fatalf("command %q wired=%v, want %v", name, Table[i].Run != nil, wantWired)
 		}
 	}
 }

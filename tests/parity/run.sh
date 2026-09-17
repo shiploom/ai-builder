@@ -4,6 +4,9 @@
 # Each tests/parity/cases/<name>/ holds: args.txt (argv, one line),
 # exit.txt (expected exit code), stdout.txt + stderr.txt (expected, or
 # stdout.contains.txt / stderr.contains.txt for needle matching).
+# Cases with setup.sh run in a FRESH TMPDIR (hermetic fault fixtures live
+# there, never committed): setup.sh receives REPO in the environment, and
+# $TMPDIR is masked as TMP in outputs.
 # Both outputs pass through normalize.sed first (versions, runtimes).
 # Exit nonzero on any mismatch. No network. Reference needs no install
 # (stdlib-only cli/shiploom.py run from the repo root).
@@ -27,10 +30,29 @@ run_one() {
   # shellcheck disable=SC2086
   set -- $(cat "$dir/args.txt" 2>/dev/null || true)
   want_exit="$(cat "$dir/exit.txt")"
-  (cd "$REPO" && "$PYBIN" cli/shiploom.py "$@" >"$TMP/py.out" 2>"$TMP/py.err"; echo "$?" >"$TMP/py.exit")
-  "$GO_BIN" "$@" >"$TMP/go.out" 2>"$TMP/go.err"; echo "$?" >"$TMP/go.exit"
+  work="$REPO"; case_tmp=""
+  if [ -f "$dir/setup.sh" ]; then
+    case_tmp="$(mktemp -d "${TMPDIR:-/tmp}/shiploom-case.XXXXXX")"
+    if ! (cd "$case_tmp" && REPO="$REPO" sh "$dir/setup.sh"); then
+      echo "FAIL $name: setup.sh failed"
+      rm -rf "$case_tmp"
+      FAIL=$((FAIL + 1))
+      return
+    fi
+    work="$case_tmp"
+  fi
+  (cd "$work" && "$PYBIN" "$REPO/cli/shiploom.py" "$@" >"$TMP/py.out" 2>"$TMP/py.err"; echo "$?" >"$TMP/py.exit")
+  # SHIPLOOM_SCHEMAS pins the Go binary to the repo schemas (its CWD/exe
+  # probing cannot see them from scratch dirs or /tmp installs).
+  (cd "$work" && SHIPLOOM_SCHEMAS="$REPO/schemas" "$GO_BIN" "$@" >"$TMP/go.out" 2>"$TMP/go.err"; echo "$?" >"$TMP/go.exit")
   norm "$TMP/py.out" >"$TMP/py.norm"; norm "$TMP/go.out" >"$TMP/go.norm"
   norm "$TMP/py.err" >"$TMP/pye.norm"; norm "$TMP/go.err" >"$TMP/goe.norm"
+  if [ -n "$case_tmp" ]; then
+    for f in "$TMP/py.norm" "$TMP/go.norm" "$TMP/pye.norm" "$TMP/goe.norm"; do
+      sed "s|$case_tmp|TMP|g" "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+    done
+    rm -rf "$case_tmp"
+  fi
   ok=1
   [ "$(cat "$TMP/py.exit")" = "$want_exit" ] || { ok=0; echo "FAIL $name: py exit $(cat "$TMP/py.exit") != $want_exit"; }
   [ "$(cat "$TMP/go.exit")" = "$want_exit" ] || { ok=0; echo "FAIL $name: go exit $(cat "$TMP/go.exit") != $want_exit"; }
