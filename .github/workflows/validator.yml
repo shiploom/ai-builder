@@ -29,13 +29,13 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install (dev extras for pytest only; validator itself is stdlib-only)
@@ -60,13 +60,14 @@ jobs:
         run: shiploom conformance --harness all
 
   go-port:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: "stable"
-      - uses: actions/setup-python@v5
+          cache: false
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Format, vet, unit test
@@ -80,10 +81,10 @@ jobs:
           sh tests/parity/run.sh /tmp/shiploom-go
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm

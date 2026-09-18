@@ -6,14 +6,14 @@ on:
 
 jobs:
   go-verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.24"
           cache: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: gofmt clean
@@ -33,7 +33,7 @@ jobs:
           SHIPLOOM_GO_BIN=/tmp/shiploom-go sh scripts/ac-demo.sh
 
   go-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
@@ -43,8 +43,8 @@ jobs:
           - { goos: darwin, goarch: arm64, ext: "" }
           - { goos: windows, goarch: amd64, ext: ".exe" }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.24"
           cache: false
@@ -61,23 +61,23 @@ jobs:
             -ldflags "-X github.com/shiploom/ai-builder/internal/version.CoreVersion=$VERSION" \
             -o "dist/shiploom-$VERSION-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" \
             ./cmd/shiploom
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shiploom-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/shiploom-*
 
   release:
     needs: [go-verify, go-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       actions: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.24"
           cache: false
@@ -109,7 +109,7 @@ jobs:
           go list -m all > dist/go-modules.txt
           printf 'stdlib-only Go binary: no third-party modules (see go-modules.txt)\n' > dist/go-sbom-note.txt
       - name: Collect Go binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: shiploom-*
           path: dist/go-bin
@@ -120,7 +120,7 @@ jobs:
           test -n "$(ls -A dist/go-bin)" || { echo "no Go binaries matched pattern shiploom-*"; exit 2; }
       - name: Checksums
         run: |
-          cd dist/go-bin && sha256sum shiploom-* > ../shiploom-checksums.txt && cd ..
+          (cd dist/go-bin && sha256sum shiploom-* > ../shiploom-checksums.txt)
           ls -la dist dist/go-bin
       - name: Create release with assets
         env:
@@ -138,13 +138,13 @@ jobs:
     # Skipped until then so untagged/unconfigured runs stay green.
     if: vars.NPM_TRUSTED_PUBLISHING == 'true'
     needs: [release]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - name: Update npm (OIDC trusted publishing needs npm 11.5.1+)
