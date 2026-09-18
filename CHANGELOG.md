@@ -3,6 +3,13 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## 1.1.1 (2026-09-18)
+
+Patch: ship the Go release binaries the npx installer downloads.
+`@shiploom/cli@1.1.0` was published against the v1.1.0 GitHub release,
+which predates the Go build matrix and carries no `shiploom-*` binaries,
+so its postinstall download 404s. v1.1.1 re-tags with the full matrix.
+
 ## PR40 — npm trusted publishing (unreleased)
 
 - `npm-publish` job in `release.yml`: OIDC trusted publishing
