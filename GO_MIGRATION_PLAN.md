@@ -76,7 +76,10 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
       Python job steps in `release.yml`/`validator.yml`, and the fallback
       docs; Go becomes the sole implementation. Keep `scripts/version-
       check.sh` (tag/core/pyproject/npx assertions stay valid).
-  - Out of scope: `doctor` changes, npm publish automation, Windows CI.
+  - Out of scope: `doctor` changes, Windows CI. npm publish is now
+    automated via OIDC trusted publishing (`npm-publish` job, gated on
+    `NPM_TRUSTED_PUBLISHING`); only the npmjs.com trusted-publisher
+    registration remains manual.
 
 ## Hard parts (release blockers)
 

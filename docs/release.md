@@ -13,6 +13,26 @@ Version policy lives in `core/README.md` (semver; `core/VERSION` and
    fails the release otherwise.
 4. The workflow validates, builds sdist + wheel, generates `dist/sbom.json`
    (CycloneDX), and attaches everything to the GitHub release.
+5. npm (`@shiploom/cli`) publishes from the same tag via OIDC trusted
+   publishing once `NPM_TRUSTED_PUBLISHING` is `'true'` (see below). The
+   very first npm version of a package must be published manually.
+
+## npm publishing (OIDC trusted publishing)
+
+npm no longer offers new TOTP/authenticator 2FA setups, while the CLI
+still demands an OTP at publish time — manual `npm publish` from a
+fresh account fails with `EOTP`. The durable fix is trusted publishing,
+which needs no tokens and no 2FA prompts in CI:
+
+1. Publish the package version once manually (passkey approval or a
+   2FA-bypassing granular token), e.g. from `wrappers/npx/`:
+   `npm publish --access public`.
+2. On npmjs.com, open the package settings and register this repo +
+   the `release` workflow as a trusted publisher.
+3. Set the `NPM_TRUSTED_PUBLISHING` repo variable to `'true'`.
+4. Later tags publish `@shiploom/cli` automatically (`--provenance`
+   `--access public`) after the GitHub release job, so the release
+   binaries the npx installer downloads already exist.
 
 ## Signing (manual until tooled)
 

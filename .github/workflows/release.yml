@@ -121,3 +121,26 @@ jobs:
           gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" \
             --notes "See CHANGELOG.md for this release." dist/* dist/go-bin/* || \
           gh release upload "${{ github.ref_name }}" dist/* dist/go-bin/* --clobber
+
+  npm-publish:
+    # OIDC trusted publishing: no tokens, no 2FA prompts in CI. One-time
+    # setup: publish @shiploom/cli once manually, register this repo +
+    # workflow as a trusted publisher in the package settings on npmjs.com,
+    # then set the NPM_TRUSTED_PUBLISHING repo variable to 'true'.
+    # Skipped until then so untagged/unconfigured runs stay green.
+    if: vars.NPM_TRUSTED_PUBLISHING == 'true'
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Update npm (OIDC trusted publishing needs npm 11.5.1+)
+        run: npm install -g npm@latest
+      - name: Publish @shiploom/cli
+        working-directory: wrappers/npx
+        run: npm publish --provenance --access public

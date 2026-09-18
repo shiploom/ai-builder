@@ -3,6 +3,14 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## PR40 — npm trusted publishing (unreleased)
+
+- `npm-publish` job in `release.yml`: OIDC trusted publishing
+  (`--provenance --access public`), gated on the
+  `NPM_TRUSTED_PUBLISHING` repo variable until the package settings on
+  npmjs.com register this repo + workflow. Works around npm retiring
+  new TOTP 2FA while the CLI still demands an OTP (`EOTP`).
+
 ## PR37 — P6 dormant Python deprecation notice (unreleased)
 
 - `_maybe_deprecation_notice()` in `cli/shiploom.py`: stderr-only,
