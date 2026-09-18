@@ -12,6 +12,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
+          cache: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -46,6 +47,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
+          cache: false
       - name: Version check
         run: test "${{ github.ref_name }}" = "v$(cat core/VERSION)"
       - name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
@@ -69,6 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -77,6 +80,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
+          cache: false
       - name: Install with dev extras
         run: pip install -e ".[dev]"
       - name: Version parity (tag, core, python, npx, go stamp)
@@ -110,6 +114,10 @@ jobs:
           pattern: shiploom-*
           path: dist/go-bin
           merge-multiple: true
+      - name: Assert Go binaries present
+        run: |
+          ls -la dist/go-bin || { echo "download produced no dist/go-bin"; exit 2; }
+          test -n "$(ls -A dist/go-bin)" || { echo "no Go binaries matched pattern shiploom-*"; exit 2; }
       - name: Checksums
         run: |
           cd dist/go-bin && sha256sum shiploom-* > ../shiploom-checksums.txt && cd ..
