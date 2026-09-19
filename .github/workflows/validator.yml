@@ -38,6 +38,14 @@ jobs:
         with:
           go-version: "stable"
           cache: false
+      # Operator tooling only (auto-detected test gates shell out to the
+      # ambient pytest, like node for the node leg); the CLI under test
+      # is the Go binary.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install pytest operator shim
+        run: pip install pytest
       - name: Format, vet, unit test
         run: |
           test -z "$(gofmt -l cmd internal)"
