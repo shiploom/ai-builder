@@ -3,6 +3,13 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## Unreleased — init seeding fix
+
+- `init` no longer silently skips `idea.md` when the seed template is
+  missing (reports `seed skipped ... (no template; write it yourself)`);
+  the release data bundle now includes `core/artifacts-templates/` so
+  npx-installed binaries seed correctly.
+
 ## 1.3.2 (2026-09-19)
 
 Patch: npx bin self-heals when postinstall was skipped (below).

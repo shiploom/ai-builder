@@ -333,7 +333,7 @@ func seedFile(toolRoot, root, rel, templateRel string, force bool) string {
 	src := filepath.Join(toolRoot, "core", "artifacts-templates", templateRel)
 	raw, err := os.ReadFile(src)
 	if err != nil {
-		return fmt.Sprintf("kept %s (exists)", rel)
+		return fmt.Sprintf("seed skipped %s (no template; write it yourself)", rel)
 	}
 	_ = os.MkdirAll(filepath.Dir(dest), 0o755)
 	_ = os.WriteFile(dest, raw, 0o644)

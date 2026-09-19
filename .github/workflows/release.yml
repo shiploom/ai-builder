@@ -124,7 +124,7 @@ jobs:
           rm -rf dist/data-stage && mkdir -p dist/data-stage/core
           cp -r schemas dist/data-stage/schemas
           cp core/VERSION dist/data-stage/core/VERSION
-          for sub in workflows policies hooks skills roles; do
+          for sub in workflows policies hooks skills roles artifacts-templates; do
             cp -r "core/$sub" "dist/data-stage/core/$sub"
           done
           cp -r adapters dist/data-stage/adapters

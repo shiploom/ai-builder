@@ -43,7 +43,7 @@ which needs no tokens and no 2FA prompts in CI:
 
 The release also attaches `shiploom-data-<version>.tar.gz` (`schemas/`
 plus `core/` workflows, policies, hooks, skills, roles,
-`adapters/`, and `examples/`). The npx
+artifacts-templates, `adapters/`, and `examples/`). The npx
 postinstall fetches and extracts it next to the vendored binary, so
 `validate`/`status`/`run` resolve everything exe-relative outside a
 repo checkout (`install`, which copies the Python tree, still needs a
