@@ -3,7 +3,9 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
-## Unreleased — npx self-heal
+## 1.3.2 (2026-09-19)
+
+Patch: npx bin self-heals when postinstall was skipped (below).
 
 - `wrappers/npx/bin/shiploom.js` runs the installer on first use when
   postinstall never ran (npx cache installs, install-scripts
