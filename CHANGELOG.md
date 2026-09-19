@@ -3,6 +3,13 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## Unreleased — npx self-heal
+
+- `wrappers/npx/bin/shiploom.js` runs the installer on first use when
+  postinstall never ran (npx cache installs, install-scripts
+  allow-lists), instead of erroring `binary missing`. Ships next
+  release; no version bump.
+
 ## 1.3.1 (2026-09-19)
 
 Patch: Windows safety (manifest save replace, LF sources, green
