@@ -1,6 +1,6 @@
 # Schemas (normative, MVP set)
 
-JSON Schema draft 2020-12. Validated offline by `validators/validate.py` (stdlib-only).
+JSON Schema draft 2020-12. Validated offline by `shiploom validate` (Go, stdlib-only).
 
 | File | Validates | Spec |
 |---|---|---|
