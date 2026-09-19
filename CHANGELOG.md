@@ -3,6 +3,18 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## Unreleased — Windows safety + CI hygiene
+
+- `windows` validator leg (gofmt/vet/test, smoke, AC demo, conformance
+  all green on `windows-latest`): `os.Rename`-over-existing fixed in
+  `manifest.Save`, LF enforced for `.go`/`.sh` via `.gitattributes`,
+  native-path handling in `ac-demo.sh`.
+- Dependabot for GitHub Actions; `NPM_TRUSTED_PUBLISHING` variable flow
+  proven by the v1.3.0 OIDC publish.
+- Release data bundle extended with `adapters/` + `examples/` (ships
+  next tag); doctor reporting reworded (operator python3, compiled-in
+  validators).
+
 ## 1.3.0 (2026-09-19)
 
 Major: Python implementation removed — Go is the sole implementation.

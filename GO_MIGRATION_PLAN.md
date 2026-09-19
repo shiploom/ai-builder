@@ -82,7 +82,8 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
       copies `{core, schemas}` (no `validators/`). `collect-dashboard`
       ported to `scripts/collect-dashboard.sh` (jq). `playground`
       moved to a Go image.
-  - Out of scope: `doctor` changes, Windows CI. npm publish is now
+  - Out of scope: `doctor` changes. Windows CI covered since (validator
+  `windows` leg green). npm publish is now
     automated via OIDC trusted publishing (`npm-publish` job, gated on
     `NPM_TRUSTED_PUBLISHING`); only the npmjs.com trusted-publisher
     registration remains manual.
