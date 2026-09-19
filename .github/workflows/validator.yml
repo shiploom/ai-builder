@@ -15,6 +15,7 @@ on:
       - "scripts/collect-dashboard.sh"
       - "scripts/version-check.sh"
       - ".github/workflows/validator.yml"
+      - ".gitattributes"
   pull_request:
     paths:
       - "schemas/**"
