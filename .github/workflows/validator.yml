@@ -69,6 +69,49 @@ jobs:
       - name: Harness conformance (deterministic, no LLM calls)
         run: SHIPLOOM_SCHEMAS="$PWD/schemas" /tmp/shiploom-go conformance --harness all
 
+  windows:
+    # Cross-platform safety for the shipped windows-amd64 binary: native
+    # Windows paths everywhere (Git Bash never leaks /c/... paths into the
+    # exe), operator pytest + jq shimmed, AC demo included.
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+          cache: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install operator shims (pytest for auto-detected gates, jq, python3 alias)
+        run: |
+          pip install pytest
+          command -v jq >/dev/null || choco install jq -y
+          command -v python3 >/dev/null || cp "$(command -v python)" "$(dirname "$(command -v python)")/python3.exe"
+      - name: Format, vet, unit test
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go vet ./cmd/... ./internal/...
+          go test ./cmd/... ./internal/...
+      - name: Build CLI
+        run: sh scripts/build-go.sh "$RUNNER_TEMP/shiploom-go.exe"
+      - name: Smoke (init/validate/status/doctor)
+        run: |
+          BIN="$RUNNER_TEMP/shiploom-go.exe"
+          export SHIPLOOM_SCHEMAS="$GITHUB_WORKSPACE/schemas"
+          "$BIN" doctor
+          rm -rf "$RUNNER_TEMP/smoke" && mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
+          "$BIN" init --green --harness auto
+          "$BIN" validate --strict .
+          "$BIN" status
+      - name: AC demo (AC1-AC6; node leg skips if unavailable)
+        run: SHIPLOOM_GO_BIN="$RUNNER_TEMP/shiploom-go.exe" sh scripts/ac-demo.sh
+      - name: Harness conformance (deterministic, no LLM calls)
+        run: SHIPLOOM_SCHEMAS="$GITHUB_WORKSPACE/schemas" "$RUNNER_TEMP/shiploom-go.exe" conformance --harness all
+
   docs:
     runs-on: ubuntu-24.04
     steps:

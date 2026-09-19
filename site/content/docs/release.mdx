@@ -42,7 +42,8 @@ which needs no tokens and no 2FA prompts in CI:
    binaries the npx installer downloads already exist.
 
 The release also attaches `shiploom-data-<version>.tar.gz` (`schemas/`
-plus `core/` workflows, policies, hooks, skills, roles). The npx
+plus `core/` workflows, policies, hooks, skills, roles,
+`adapters/`, and `examples/`). The npx
 postinstall fetches and extracts it next to the vendored binary, so
 `validate`/`status`/`run` resolve everything exe-relative outside a
 repo checkout (`install`, which copies the Python tree, still needs a

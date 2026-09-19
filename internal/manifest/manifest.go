@@ -118,6 +118,13 @@ func Save(projectDir string, data map[string]any) (string, error) {
 		os.Remove(tmpName)
 		return "", err
 	}
+	// os.Rename cannot replace an existing file on Windows, so remove
+	// first (POSIX keeps atomic replace; the crash window on Windows is
+	// accepted — manifests are rewritten on every run).
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		os.Remove(tmpName)
+		return "", err
+	}
 	if err := os.Rename(tmpName, path); err != nil {
 		os.Remove(tmpName)
 		return "", err

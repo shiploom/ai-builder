@@ -22,6 +22,12 @@
 set -u
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash paths (/c/...) are unreadable to the native exe: use the
+    # Windows form for everything handed to it via the environment.
+    REPO="$(cd "$(dirname "$0")/.." && pwd -W)" ;;
+esac
 command -v jq >/dev/null 2>&1 || { echo "ac-demo needs jq on PATH" >&2; exit 2; }
 T="$REPO/core/artifacts-templates"
 PASS=0; FAIL=0; SKIPP=0

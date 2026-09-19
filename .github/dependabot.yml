@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # Keep GitHub Actions on current majors (Node-runtime deprecations
+  # surface as CI annotations otherwise).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

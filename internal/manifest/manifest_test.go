@@ -86,3 +86,33 @@ func TestSha256File(t *testing.T) {
 		t.Fatalf("wrong digest: %s", got)
 	}
 }
+
+func TestSaveOverExisting(t *testing.T) {
+	dir := t.TempDir()
+	g := Genesis("1.3.0", GreenfieldWorkflow, nil)
+	g["initializedAt"] = "2026-09-17T10:00:00Z"
+	if _, err := Save(dir, g); err != nil {
+		t.Fatal(err)
+	}
+	// Second save must replace (os.Rename cannot do that on Windows).
+	g["workflowVersion"] = "9.9.9"
+	if _, err := Save(dir, g); err != nil {
+		t.Fatalf("save over existing manifest must succeed: %s", err)
+	}
+	loaded, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded["workflowVersion"] != "9.9.9" {
+		t.Fatalf("second save lost: %v", loaded["workflowVersion"])
+	}
+	if entries, err := os.ReadDir(filepath.Join(dir, ".shiploom")); err != nil {
+		t.Fatal(err)
+	} else {
+		for _, e := range entries {
+			if strings.HasPrefix(e.Name(), ".manifest-") {
+				t.Fatalf("temp file leaked: %s", e.Name())
+			}
+		}
+	}
+}

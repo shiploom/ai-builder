@@ -97,12 +97,12 @@ func RunChecks(schemas *validate.Schemas, schemasDir, toolRoot, projectDir strin
 			fmt.Sscanf(parts[1], "%d", &minor)
 		}
 		if major > 3 || (major == 3 && minor >= 9) {
-			add("python", "pass", "Python "+version)
+			add("python", "pass", "operator python3 "+version)
 		} else {
-			add("python", "fail", "requires >=3.9, found "+version)
+			add("python", "fail", "operator python3 >=3.9 required, found "+version)
 		}
 	} else {
-		add("python", "fail", "requires >=3.9, found none (python3 not on PATH)")
+		add("python", "fail", "operator python3 not on PATH (>=3.9 assumed by test gates)")
 	}
 
 	versionFile := filepath.Join(toolRoot, "core", "VERSION")
@@ -146,9 +146,9 @@ func RunChecks(schemas *validate.Schemas, schemasDir, toolRoot, projectDir strin
 		add("schemas", "pass", fmt.Sprintf("%d normative schemas", len(SchemaFiles)))
 	}
 
-	// The Go binary embeds the ported validators; the importable check
-	// always passes wherever the Python one does (documented shim).
-	add("validators", "pass", "importable (stdlib-only)")
+	// The Go binary embeds the validators (stdlib-only); the check
+	// always passes. (The "importable" name is kept for output stability.)
+	add("validators", "pass", "compiled in (stdlib-only)")
 
 	// --- harnesses (warn-only) ---
 	for _, harness := range []string{"claude", "opencode"} {
@@ -320,8 +320,8 @@ func osErrText(path string, err error) string {
 	return err.Error()
 }
 
-// pythonVersion reports the operator python3's "X.Y.Z" (same binary the
-// parity harness uses for the reference CLI).
+// pythonVersion reports the operator python3's "X.Y.Z" (used by
+// auto-detected test gates and conformance guard replay).
 func pythonVersion() (string, bool) {
 	for _, binary := range []string{"python3", "python"} {
 		path, err := exec.LookPath(binary)

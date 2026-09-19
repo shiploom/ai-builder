@@ -127,6 +127,8 @@ jobs:
           for sub in workflows policies hooks skills roles; do
             cp -r "core/$sub" "dist/data-stage/core/$sub"
           done
+          cp -r adapters dist/data-stage/adapters
+          cp -r examples dist/data-stage/examples
           tar -czf "dist/shiploom-data-$VERSION.tar.gz" -C dist/data-stage schemas core
           rm -rf dist/data-stage
       - name: Checksums
