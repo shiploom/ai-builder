@@ -1,7 +1,7 @@
 # Cost / escape dashboard (contract)
 
 Inputs are local files the orchestrator already writes; no vendor APIs.
-`scripts/collect-dashboard.py [project]` emits this JSON (missing inputs
+`sh scripts/collect-dashboard.sh [project]` emits this JSON (missing inputs
 yield `null`, never guesses):
 
 ```json

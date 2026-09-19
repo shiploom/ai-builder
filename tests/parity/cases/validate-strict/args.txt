@@ -1,1 +1,0 @@
-validate --strict core/artifacts-templates

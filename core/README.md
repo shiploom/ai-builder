@@ -8,7 +8,7 @@ Single source of truth for adapters. Base-spec compatible; harness extras only u
 - MAJOR: breaking contract change (schemas, CLI surface, manifest shape).
 - MINOR: additive change (new commands, skills, adapters, gates).
 - PATCH: fixes and doc-only changes.
-- `pyproject.toml` tracks the same version (PEP 440). Projects pin it via
+- `wrappers/npx/package.json` tracks the same version. Projects pin it via
   `shiploom pin`; `shiploom upgrade` moves a project between versions with
   backup + rollback.
 

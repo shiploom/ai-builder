@@ -13,19 +13,6 @@ brew install shiploom/tap/shiploom
 ~6MB, starts in ~5ms, no runtime to install. Requires nothing else;
 validators and orchestrator are compiled in.
 
-## Python fallback — deprecated, removal v1.3.0 (pipx / uvx)
-
-```bash
-pipx install git+https://github.com/shiploom/ai-builder.git
-# or: uvx --from git+https://github.com/shiploom/ai-builder shiploom
-```
-
-Requires Python ≥3.9, no other runtime. Same CLI surface, same exit
-codes; the Go binary is the default distribution. The Python
-implementation is deprecated as of core 1.2.0 and will be removed in
-v1.3.0 — interactive runs already print a stderr notice pointing at
-the Go single binary.
-
 ## From source (contributors)
 
 ```bash

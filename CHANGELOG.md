@@ -3,6 +3,17 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## 1.3.0 (2026-09-19)
+
+Major: Python implementation removed — Go is the sole implementation.
+Deleted `cli/`, `validators/`, `tests/unit/`, `tests/parity/`, and
+`pyproject.toml`; `ac-demo.sh` is Go-only (jq-based config patching,
+shell test gates, 54/54); CI runs no Python implementation steps
+(`pytest` kept only as ambient operator tooling for auto-detected test
+gates, like node); `version-check.sh` asserts tag/core/npx/GoCLI;
+`install` copies `{core, schemas}`; dashboard collector ported to
+`scripts/collect-dashboard.sh`. Dual-ship gates stay green throughout.
+
 ## 1.2.0 (2026-09-19)
 
 Minor: Python fallback deprecated (removal v1.3.0). The dormant

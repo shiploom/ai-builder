@@ -1,18 +1,20 @@
 # Release process
 
 Version policy lives in `core/README.md` (semver; `core/VERSION` and
-`pyproject.toml` move together). Checklist for `vX.Y.Z`:
+`wrappers/npx/package.json` move together). Checklist for `vX.Y.Z`:
 
-1. Bump `core/VERSION` + `pyproject.toml` + `wrappers/npx/package.json` + `CHANGELOG.md` entry.
-2. Full gate: `pytest tests/unit -q`, `validate --strict .`,
-   `sh scripts/ac-demo.sh`, `shiploom conformance --harness all`,
-   plus the Go leg: `gofmt`/`go vet`/`go test`, stamped-binary parity,
-   `SHIPLOOM_GO_BIN=<bin> sh scripts/ac-demo.sh`.
+1. Bump `core/VERSION` + `wrappers/npx/package.json` + `CHANGELOG.md` entry.
+2. Full gate, all through the Go binary: `gofmt`/`go vet`/`go test`,
+   `shiploom validate --strict .`, `sh scripts/ac-demo.sh`
+   (needs `jq`; pytest-bearing `python3` first on PATH for
+   auto-detected gates), `shiploom conformance --harness all`.
 3. Commit, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
    The tag must equal both version files — `.github/workflows/release.yml`
    fails the release otherwise.
-4. The workflow validates, builds sdist + wheel, generates `dist/sbom.json`
-   (CycloneDX), and attaches everything to the GitHub release.
+4. The workflow validates, builds the 5-platform Go binaries +
+   tool-data tarball (`dist/go-modules.txt` + `go-sbom-note.txt` are the
+   stdlib-only SBOM evidence), and attaches everything to the GitHub
+   release.
 5. npm (`@shiploom/cli`) publishes from the same tag via OIDC trusted
    publishing once `NPM_TRUSTED_PUBLISHING` is `'true'` (see below). The
    very first npm version of a package must be published manually.
@@ -46,7 +48,7 @@ checkout; `adapters`/`examples` are not bundled yet).
 After the workflow publishes:
 
 ```bash
-cosign sign-blob --yes dist/shiploom_core-X.Y.Z.tar.gz > dist/*.sig
+cosign sign-blob --yes dist/shiploom-data-X.Y.Z.tar.gz > dist/*.sig
 gh release upload vX.Y.Z dist/*.sig
 ```
 

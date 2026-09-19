@@ -118,7 +118,8 @@ func RunInstall(args []string) int {
 		}
 		return ExitValidation
 	}
-	for _, sub := range []string{"core", "schemas", "validators"} {
+	// validators/ left with the Python implementation in v1.3.0.
+	for _, sub := range []string{"core", "schemas"} {
 		if err := copyTree(filepath.Join(toolRoot, sub), filepath.Join(dest, sub)); err != nil {
 			return fail(err.Error(), ExitValidation)
 		}

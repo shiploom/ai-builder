@@ -4,8 +4,8 @@
 
 ## Facts
 
-- Stack: Python + uv, `requires-python >=3.9`. Validators in `validators/` are **stdlib-only** (no `jsonschema`, no `yaml` at runtime).
-- CLI in `cli/` uses stdlib `argparse` only in MVP. Entry point: `shiploom` → `cli.shiploom:main`.
+- Stack: Go, stdlib-only (`go.mod` carries no third-party deps). Single `shiploom` binary built by `sh scripts/build-go.sh <out>` (stamps `core/VERSION` via ldflags).
+- CLI + validators live in `cmd/` + `internal/` (hand-rolled subcommands; the Python implementation was removed in v1.3.0).
 - Schemas in `schemas/` are JSON Schema draft 2020-12. Nine normative files (see `schemas/README.md`).
 - Adapters: single-source `core/*` → generated harness files. Never hand-edit generated files (header `DO NOT EDIT`).
 - Oracle vault `./.shiploom/.oracle/` is gitignored, `0700`, never fed to builder contexts.
@@ -37,7 +37,7 @@
 - `shiploom pin [--check]` — reproducibility pin + drift check
 - `shiploom upgrade [--dry-run] [--rollback]` — move project core version
 - `shiploom characterize --capture NAME [--command CMD] | --diff NAME | --list` — behavior snapshots
-- `pytest tests/unit -q` — hermetic unit tests (no network)
+- `go test ./cmd/... ./internal/...` — hermetic unit tests (no network)
 
 ## Nested scopes
 

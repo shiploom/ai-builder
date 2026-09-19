@@ -13,22 +13,22 @@ jobs:
         with:
           go-version: "1.24"
           cache: false
+      # Operator tooling only (auto-detected test gates shell out to the
+      # ambient pytest, like node for the node leg); the CLI under test
+      # is the Go binary.
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
+      - name: Install pytest operator shim
+        run: pip install pytest
       - name: gofmt clean
         run: test -z "$(gofmt -l internal/ cmd/)"
       - name: Go vet + tests
         run: |
           go vet ./...
           go test ./...
-      - name: Stamped binary + parity
+      - name: Stamped binary + AC demo
         run: |
-          sh scripts/build-go.sh /tmp/shiploom-go
-          SHIPLOOM_SCHEMAS="$PWD/schemas" bash tests/parity/run.sh /tmp/shiploom-go
-      - name: AC demo under Go
-        run: |
-          pip install pytest
           sh scripts/build-go.sh /tmp/shiploom-go
           SHIPLOOM_GO_BIN=/tmp/shiploom-go sh scripts/ac-demo.sh
 
@@ -74,38 +74,38 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
       - uses: actions/setup-go@v7
         with:
           go-version: "1.24"
           cache: false
-      - name: Install with dev extras
-        run: pip install -e ".[dev]"
-      - name: Version parity (tag, core, python, npx, go stamp)
-        run: sh scripts/version-check.sh "" "${{ github.ref_name }}"
-      - name: Unit tests
-        run: pytest tests/unit -q
-      - name: Strict validate + trace
-        run: |
-          python validators/validate.py --strict .
-          python validators/trace.py --strict . --out /tmp/trace.json
+      # Operator tooling only (auto-detected test gates shell out to the
+      # ambient pytest, like node for the node leg); the CLI under test
+      # is the Go binary.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install pytest operator shim
+        run: pip install pytest
+      - name: Build CLI
+        run: sh scripts/build-go.sh /tmp/shiploom-rel
+      - name: Version parity (tag, core, npx, go stamp)
+        run: sh scripts/version-check.sh /tmp/shiploom-rel "${{ github.ref_name }}"
+      - name: Strict validate on repo (offline, stdlib only)
+        run: SHIPLOOM_SCHEMAS="$PWD/schemas" /tmp/shiploom-rel validate --strict .
       - name: Entry point smoke
         run: |
-          shiploom doctor
+          export PATH="/tmp:$PATH" && cp /tmp/shiploom-rel /tmp/shiploom
+          SHIPLOOM_SCHEMAS="$PWD/schemas" shiploom doctor
           rm -rf /tmp/ship-smoke && mkdir -p /tmp/ship-smoke && cd /tmp/ship-smoke
-          shiploom init --green --harness auto
-          shiploom validate --strict .
+          SHIPLOOM_SCHEMAS="$GITHUB_WORKSPACE/schemas" shiploom init --green --harness auto
+          SHIPLOOM_SCHEMAS="$GITHUB_WORKSPACE/schemas" shiploom validate --strict .
       - name: AC demo
-        run: SHIP_PY="$(command -v python)" sh scripts/ac-demo.sh
+        run: SHIPLOOM_GO_BIN=/tmp/shiploom-rel sh scripts/ac-demo.sh
       - name: Harness conformance
-        run: shiploom conformance --harness all
+        run: SHIPLOOM_SCHEMAS="$PWD/schemas" /tmp/shiploom-rel conformance --harness all
       - name: Build distributions
         run: |
-          pip install build cyclonedx-bom
-          python -m build
-          cyclonedx-py environment --output-format JSON --output-file dist/sbom.json
+          mkdir -p dist
           go list -m all > dist/go-modules.txt
           printf 'stdlib-only Go binary: no third-party modules (see go-modules.txt)\n' > dist/go-sbom-note.txt
       - name: Collect Go binaries
@@ -137,7 +137,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ASSETS="dist/*.whl dist/*.tar.gz dist/sbom.json dist/go-modules.txt dist/go-sbom-note.txt dist/shiploom-checksums.txt dist/go-bin/shiploom-*"
+          ASSETS="dist/*.tar.gz dist/go-modules.txt dist/go-sbom-note.txt dist/shiploom-checksums.txt dist/go-bin/shiploom-*"
           # shellcheck disable=SC2086
           gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" \
             --notes "See CHANGELOG.md for this release." $ASSETS || \

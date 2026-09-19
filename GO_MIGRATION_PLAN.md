@@ -71,11 +71,17 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
   - Transition tracking (calendar-gated, do not start early):
     - [x] 1.2.0: `docs/install.md` Python fallback → "deprecated,
       removal v1.3.0" (notice fires on its own; verify with a TTY run).
-    - [ ] 1.3.0: delete `cli/` + `validators/` Python, `tests/parity/`,
-      `SHIPLOOM_GO_BIN` mode + `$PY` legs in `scripts/ac-demo.sh`,
-      Python job steps in `release.yml`/`validator.yml`, and the fallback
-      docs; Go becomes the sole implementation. Keep `scripts/version-
-      check.sh` (tag/core/pyproject/npx assertions stay valid).
+    - [x] 1.3.0: deleted `cli/` + `validators/` Python, `tests/unit/`,
+      `tests/parity/`, `pyproject.toml`, dual-mode + `$PY` legs in
+      `scripts/ac-demo.sh` (Go-only + jq, shell test gates), Python job
+      steps in `release.yml`/`validator.yml`, and the fallback docs; Go
+      is the sole implementation. `scripts/version-check.sh` kept but
+      rewired Go-only (the pyproject assertion left with the Python
+      packaging); agreement of the remaining version files is also
+      covered by `internal/version` unit test on every push. `install`
+      copies `{core, schemas}` (no `validators/`). `collect-dashboard`
+      ported to `scripts/collect-dashboard.sh` (jq). `playground`
+      moved to a Go image.
   - Out of scope: `doctor` changes, Windows CI. npm publish is now
     automated via OIDC trusted publishing (`npm-publish` job, gated on
     `NPM_TRUSTED_PUBLISHING`); only the npmjs.com trusted-publisher
