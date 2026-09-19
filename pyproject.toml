@@ -1,7 +1,7 @@
 [project]
 name = "shiploom-core"
 # PEP 440 package version, tracked with core/VERSION (semver policy: core/README).
-version = "1.1.1"
+version = "1.2.0"
 description = "Shiploom Core — portable, zero-runtime AI software engineering layer (Specifier/Implementer/Verifier + deterministic orchestrator)"
 readme = "README.md"
 requires-python = ">=3.9"

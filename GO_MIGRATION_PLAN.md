@@ -69,7 +69,7 @@ preserves the zero-dependency supply-chain posture. No cobra/viper.
     deleted alongside, a minor later). N-1 support per MASTER_SPEC
     deprecation policy.
   - Transition tracking (calendar-gated, do not start early):
-    - [ ] 1.2.0: `docs/install.md` Python fallback → "deprecated,
+    - [x] 1.2.0: `docs/install.md` Python fallback → "deprecated,
       removal v1.3.0" (notice fires on its own; verify with a TTY run).
     - [ ] 1.3.0: delete `cli/` + `validators/` Python, `tests/parity/`,
       `SHIPLOOM_GO_BIN` mode + `$PY` legs in `scripts/ac-demo.sh`,

@@ -3,6 +3,13 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
+## 1.2.0 (2026-09-19)
+
+Minor: Python fallback deprecated (removal v1.3.0). The dormant
+deprecation notice is now live for interactive TTY runs; docs mark the
+fallback deprecated. Dual-ship continues: full parity 77/77, version
+gate green on both CLIs.
+
 ## 1.1.1 (2026-09-18)
 
 Patch: ship the Go release binaries the npx installer downloads.
