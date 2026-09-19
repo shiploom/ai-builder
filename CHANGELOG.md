@@ -3,7 +3,12 @@
 All notable changes, newest first. Version is `core/VERSION`
 (semver since 1.0.0; pre-release series was `1.0.0-draft`).
 
-## Unreleased — Windows safety + CI hygiene
+## 1.3.1 (2026-09-19)
+
+Patch: Windows safety (manifest save replace, LF sources, green
+`windows` validator leg with AC demo), release data bundle extended
+with `adapters/` + `examples/`, doctor reporting reworded, Dependabot
+for actions.
 
 - `windows` validator leg (gofmt/vet/test, smoke, AC demo, conformance
   all green on `windows-latest`): `os.Rename`-over-existing fixed in
