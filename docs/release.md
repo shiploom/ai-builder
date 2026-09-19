@@ -34,6 +34,13 @@ which needs no tokens and no 2FA prompts in CI:
    `--access public`) after the GitHub release job, so the release
    binaries the npx installer downloads already exist.
 
+The release also attaches `shiploom-data-<version>.tar.gz` (`schemas/`
+plus `core/` workflows, policies, hooks, skills, roles). The npx
+postinstall fetches and extracts it next to the vendored binary, so
+`validate`/`status`/`run` resolve everything exe-relative outside a
+repo checkout (`install`, which copies the Python tree, still needs a
+checkout; `adapters`/`examples` are not bundled yet).
+
 ## Signing (manual until tooled)
 
 After the workflow publishes:

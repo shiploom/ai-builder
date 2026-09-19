@@ -10,6 +10,23 @@ Patch: ship the Go release binaries the npx installer downloads.
 which predates the Go build matrix and carries no `shiploom-*` binaries,
 so its postinstall download 404s. v1.1.1 re-tags with the full matrix.
 
+## PR42 — npx tool-data bundle (unreleased)
+
+- Release attaches `shiploom-data-<version>.tar.gz`; the npx
+  postinstall downloads + extracts it into `vendor/` (system `tar`
+  required) so the installed binary resolves schemas, workflows,
+  policies, hooks, skills, and roles exe-relative. Verified from an
+  alien directory with no env vars (`validate`/`status`/`run` green).
+
+## PR41 — CI warning cleanup + release fixes (unreleased)
+
+- `release.yml` Checksums `cd ..` bug (subshell keeps workspace CWD);
+  asset globs exclude the `go-bin/` directory; `actions: read` for
+  artifact download; fail-fast binary guard.
+- All workflows: actions on current majors, runners pinned to
+  `ubuntu-24.04`, `cache: false` on setup-go (stdlib-only, no `go.sum`).
+  Zero annotations on validator/docs/release runs.
+
 ## PR40 — npm trusted publishing (unreleased)
 
 - `npm-publish` job in `release.yml`: OIDC trusted publishing

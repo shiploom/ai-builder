@@ -118,6 +118,17 @@ jobs:
         run: |
           ls -la dist/go-bin || { echo "download produced no dist/go-bin"; exit 2; }
           test -n "$(ls -A dist/go-bin)" || { echo "no Go binaries matched pattern shiploom-*"; exit 2; }
+      - name: Package tool data
+        run: |
+          VERSION="$(cat core/VERSION)"
+          rm -rf dist/data-stage && mkdir -p dist/data-stage/core
+          cp -r schemas dist/data-stage/schemas
+          cp core/VERSION dist/data-stage/core/VERSION
+          for sub in workflows policies hooks skills roles; do
+            cp -r "core/$sub" "dist/data-stage/core/$sub"
+          done
+          tar -czf "dist/shiploom-data-$VERSION.tar.gz" -C dist/data-stage schemas core
+          rm -rf dist/data-stage
       - name: Checksums
         run: |
           (cd dist/go-bin && sha256sum shiploom-* > ../shiploom-checksums.txt)

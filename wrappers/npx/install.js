@@ -3,7 +3,7 @@
 // global fetch, no dependencies). The binary itself runs fully offline.
 "use strict";
 
-const { createWriteStream, chmodSync, mkdirSync, existsSync } = require("fs");
+const { createWriteStream, chmodSync, mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { get } = require("https");
 const { join } = require("path");
 const { spawnSync } = require("child_process");
@@ -43,18 +43,45 @@ function download(url, dest) {
   });
 }
 
+function dataReady(dir) {
+  if (!existsSync(join(dir, "schemas", "artifact-frontmatter.schema.json"))) return false;
+  try {
+    return readFileSync(join(dir, ".data-version"), "utf8").trim() === VERSION;
+  } catch {
+    return false;
+  }
+}
+
+function extractTarball(archive, dir) {
+  const tar = spawnSync("tar", ["-xzf", archive, "-C", dir], { encoding: "utf8" });
+  if (tar.status !== 0) {
+    throw new Error(`extract failed (need a 'tar' binary): ${String(tar.stderr || "").trim()}`);
+  }
+}
+
 (async () => {
   const dir = join(__dirname, "vendor");
   mkdirSync(dir, { recursive: true });
   const dest = join(dir, process.platform === "win32" ? "shiploom.exe" : "shiploom");
   if (existsSync(dest)) {
     const check = spawnSync(dest, ["--version"], { encoding: "utf8" });
-    if (check.status === 0 && String(check.stdout).includes(VERSION)) return;
+    if (check.status === 0 && String(check.stdout).includes(VERSION) && dataReady(dir)) return;
   }
-  const url = `https://github.com/shiploom/ai-builder/releases/download/v${VERSION}/${asset()}`;
-  process.stderr.write(`shiploom: downloading ${asset()} ...\n`);
-  await download(url, dest);
+  const base = `https://github.com/shiploom/ai-builder/releases/download/v${VERSION}`;
+  const binName = asset();
+  process.stderr.write(`shiploom: downloading ${binName} ...\n`);
+  await download(`${base}/${binName}`, dest);
   chmodSync(dest, 0o755);
+  // Tool data (schemas + core workflows/policies/hooks/skills/roles) so the
+  // binary resolves everything exe-relative outside a repo checkout.
+  const dataName = `shiploom-data-${VERSION}.tar.gz`;
+  const archive = join(dir, dataName);
+  process.stderr.write(`shiploom: downloading ${dataName} ...\n`);
+  await download(`${base}/${dataName}`, archive);
+  extractTarball(archive, dir);
+  unlinkSync(archive);
+  writeFileSync(join(dir, ".data-version"), VERSION + "\n");
+  if (!dataReady(dir)) throw new Error(`data install incomplete in ${dir}`);
 })().catch((err) => {
   process.stderr.write(`shiploom: install failed: ${err.message}\n`);
   process.exit(1);
